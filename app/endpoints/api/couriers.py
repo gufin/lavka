@@ -9,7 +9,7 @@ from services.use_cases.courier_service import CourierService
 router = APIRouter()
 
 
-@router.post('/couriers')
+@router.post("/couriers")
 @inject
 async def progress(
     couriers_model: CouriersList,

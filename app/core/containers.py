@@ -5,7 +5,7 @@ from services.use_cases.courier_service import CourierService
 
 
 class Container(containers.DeclarativeContainer):
-    wiring_config = containers.WiringConfiguration(packages=['endpoints'])
+    wiring_config = containers.WiringConfiguration(packages=["endpoints"])
     config = providers.Configuration()
 
     repository = providers.Singleton(
@@ -13,7 +13,4 @@ class Container(containers.DeclarativeContainer):
         config=config.storage_url,
     )
 
-    courier_service = providers.Factory(
-        CourierService,
-        repository=repository
-    )
+    courier_service = providers.Factory(CourierService, repository=repository)

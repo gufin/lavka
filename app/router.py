@@ -5,21 +5,13 @@ from starlette import status
 router = APIRouter()
 
 
-@router.get(
-    "/ping",
-    name='dev:ping',
-    status_code=status.HTTP_200_OK
-)
+@router.get("/ping", name="dev:ping", status_code=status.HTTP_200_OK)
 async def ping():
-    return 'pong'
+    return "pong"
 
 
-@router.post(
-    "/hello",
-    name='dev:hello-username',
-    status_code=status.HTTP_200_OK
-)
+@router.post("/hello", name="dev:hello-username", status_code=status.HTTP_200_OK)
 async def ping(request: Request):
     request = await request.json()
-    username = request['username']
-    return f'Hello, {username}!'
+    username = request["username"]
+    return f"Hello, {username}!"

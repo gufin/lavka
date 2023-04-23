@@ -13,7 +13,8 @@ class Courier(Base):
     __tablename__ = "couriers"
 
     id = Column(Integer, primary_key=True)
-    courier_type = Column(Enum("FOOT", "BIKE", "AUTO", name="courier_types"),
-                          nullable=False)
+    courier_type = Column(
+        Enum("FOOT", "BIKE", "AUTO", name="courier_types"), nullable=False
+    )
     regions = Column(ARRAY(Integer), nullable=False)
     working_hours = Column(ARRAY(String), nullable=False)

@@ -1,6 +1,6 @@
 from enum import Enum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class CourierType(str, Enum):
@@ -10,6 +10,7 @@ class CourierType(str, Enum):
 
 
 class CourierModel(BaseModel):
+    id: int = Field(default=None, alias="courier_id")
     courier_type: CourierType
     regions: list[int]
     working_hours: list[str]
