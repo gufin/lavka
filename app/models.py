@@ -18,3 +18,9 @@ class CourierModel(BaseModel):
 
 class CouriersList(BaseModel):
     couriers: list[CourierModel]
+
+
+class CouriersListResponse(BaseModel):
+    couriers: list[CourierModel]
+    limit: int
+    offset: int
