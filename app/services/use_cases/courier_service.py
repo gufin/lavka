@@ -15,7 +15,7 @@ class CourierService:
     async def create_couriers(self, *, couriers_model: CouriersList) -> CouriersList:
         return await self.repository.create_couriers(couriers_model=couriers_model)
 
-    async def get_courier(self, *, courier_id: str) -> CourierModel:
+    async def get_courier(self, *, courier_id: int) -> CourierModel:
         return await self.repository.get_courier(courier_id=courier_id)
 
     async def get_couriers(self, offset: int, limit: int) -> CouriersListResponse:
@@ -23,3 +23,6 @@ class CourierService:
 
     async def create_orders(self, *, orders_model: OrdersList) -> list[OrderModel]:
         return await self.repository.create_orders(orders_model=orders_model)
+
+    async def get_order(self, *, order_id: int) -> OrderModel:
+        return await self.repository.get_order(order_id=order_id)

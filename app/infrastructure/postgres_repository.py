@@ -35,9 +35,9 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
             await session.commit()
         return CouriersList(couriers=created_couriers)
 
-    async def get_courier(self, *, courier_id: str) -> CourierModel:
+    async def get_courier(self, *, courier_id: int) -> CourierModel:
         async with AsyncSession(engine) as session:
-            stmt = select(Courier).where(Courier.id == int(courier_id))
+            stmt = select(Courier).where(Courier.id == courier_id)
             result = await session.execute(stmt)
             courier = result.scalar_one_or_none()
 
@@ -90,3 +90,21 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
                     )
             await session.commit()
         return created_orders
+
+    async def get_order(self, *, order_id: int) -> OrderModel:
+        async with AsyncSession(engine) as session:
+            stmt = select(Order).where(Order.id == order_id)
+            result = await session.execute(stmt)
+            order = result.scalar_one_or_none()
+
+            if order is None:
+                return None
+
+            return OrderModel(
+                order_id=order.id,
+                weight=order.weight,
+                regions=order.regions,
+                delivery_hours=order.delivery_hours,
+                cost=order.cost,
+                completed_time=order.completed_time,
+            )

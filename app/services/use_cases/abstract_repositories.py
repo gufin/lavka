@@ -15,7 +15,7 @@ class LavkaAbstractRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_courier(self, *, courier_id: str) -> CourierModel:
+    async def get_courier(self, *, courier_id: int) -> CourierModel:
         pass
 
     @abstractmethod
@@ -24,4 +24,8 @@ class LavkaAbstractRepository(ABC):
 
     @abstractmethod
     async def create_orders(self, orders_model: OrdersList) -> list[OrderModel]:
+        pass
+
+    @abstractmethod
+    async def get_order(self, *, order_id: int) -> OrderModel:
         pass

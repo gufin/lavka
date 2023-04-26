@@ -20,7 +20,7 @@ async def create_couriers(
 @router.get("/couriers/{courier_id}")
 @inject
 async def get_courier(
-    courier_id: str,
+    courier_id: int,
     courier_service: CourierService = Depends(Provide[Container.courier_service]),
 ) -> CourierModel:
     return await courier_service.get_courier(courier_id=courier_id)
