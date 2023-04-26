@@ -28,7 +28,7 @@ async def get_courier(
 
 @router.get("/couriers")
 @inject
-async def get_courier(
+async def get_couriers(
     offset: int = Query(0, ge=0),
     limit: int = Query(1, ge=1),
     courier_service: CourierService = Depends(Provide[Container.courier_service]),

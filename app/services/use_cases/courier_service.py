@@ -26,3 +26,6 @@ class CourierService:
 
     async def get_order(self, *, order_id: int) -> OrderModel:
         return await self.repository.get_order(order_id=order_id)
+
+    async def get_orders(self, offset: int, limit: int) -> list[OrderModel]:
+        return await self.repository.get_orders(offset=offset, limit=limit)

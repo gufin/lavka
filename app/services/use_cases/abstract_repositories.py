@@ -29,3 +29,7 @@ class LavkaAbstractRepository(ABC):
     @abstractmethod
     async def get_order(self, *, order_id: int) -> OrderModel:
         pass
+
+    @abstractmethod
+    async def get_orders(self, offset: int, limit: int) -> list[OrderModel]:
+        pass

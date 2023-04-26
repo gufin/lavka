@@ -24,3 +24,13 @@ async def get_order(
     courier_service: CourierService = Depends(Provide[Container.courier_service]),
 ) -> OrderModel:
     return await courier_service.get_order(order_id=order_id)
+
+
+@router.get("/orders")
+@inject
+async def get_orders(
+    offset: int = Query(0, ge=0),
+    limit: int = Query(1, ge=1),
+    courier_service: CourierService = Depends(Provide[Container.courier_service]),
+) -> list[OrderModel]:
+    return await courier_service.get_orders(offset=offset, limit=limit)

@@ -108,3 +108,22 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
                 cost=order.cost,
                 completed_time=order.completed_time,
             )
+
+    async def get_orders(self, offset: int,
+                           limit: int) -> list[OrderModel]:
+        async with AsyncSession(engine) as session:
+            async with session.begin():
+                stmt = select(Order).offset(offset).limit(limit)
+                result = await session.execute(stmt)
+                orders = result.scalars().all()
+                return [
+                    OrderModel(
+                        order_id=order.id,
+                        weight=order.weight,
+                        regions=order.regions,
+                        delivery_hours=order.delivery_hours,
+                        cost=order.cost,
+                        completed_time=order.completed_time,
+                    )
+                    for order in orders
+                ]
