@@ -1,6 +1,12 @@
 from abc import ABC, abstractmethod
 
-from models import CourierModel, CouriersList, CouriersListResponse
+from models import (
+    CourierModel,
+    CouriersList,
+    CouriersListResponse,
+    OrderModel,
+    OrdersList,
+)
 
 
 class LavkaAbstractRepository(ABC):
@@ -14,4 +20,8 @@ class LavkaAbstractRepository(ABC):
 
     @abstractmethod
     async def get_couriers(self, offset: int, limit: int) -> CouriersListResponse:
+        pass
+
+    @abstractmethod
+    async def create_orders(self, orders_model: OrdersList) -> list[OrderModel]:
         pass

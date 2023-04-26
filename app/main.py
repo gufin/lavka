@@ -3,7 +3,7 @@ from fastapi import FastAPI
 
 from core.containers import Container
 from core.settings import settings
-from endpoints.api import couriers
+from endpoints.api import couriers, orders
 
 
 def get_application() -> FastAPI:
@@ -12,6 +12,7 @@ def get_application() -> FastAPI:
     container.config.from_pydantic(settings)
     application.container = container
     application.include_router(couriers.router)
+    application.include_router(orders.router)
 
     return application
 

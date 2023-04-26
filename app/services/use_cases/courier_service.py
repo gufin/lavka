@@ -1,4 +1,10 @@
-from models import CourierModel, CouriersList, CouriersListResponse
+from models import (
+    CourierModel,
+    CouriersList,
+    CouriersListResponse,
+    OrderModel,
+    OrdersList,
+)
 from services.use_cases.abstract_repositories import LavkaAbstractRepository
 
 
@@ -14,3 +20,6 @@ class CourierService:
 
     async def get_couriers(self, offset: int, limit: int) -> CouriersListResponse:
         return await self.repository.get_couriers(offset=offset, limit=limit)
+
+    async def create_orders(self, *, orders_model: OrdersList) -> list[OrderModel]:
+        return await self.repository.create_orders(orders_model=orders_model)

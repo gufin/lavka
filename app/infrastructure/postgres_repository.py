@@ -1,8 +1,14 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from infrastructure.entities import Courier, engine
-from models import CourierModel, CouriersList, CouriersListResponse
+from infrastructure.entities import Courier, engine, Order
+from models import (
+    CourierModel,
+    CouriersList,
+    CouriersListResponse,
+    OrderModel,
+    OrdersList,
+)
 from services.use_cases.abstract_repositories import LavkaAbstractRepository
 
 
@@ -63,3 +69,24 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
                 return CouriersListResponse(
                     couriers=couriers_models, limit=limit, offset=offset
                 )
+
+    async def create_orders(self, *, orders_model: OrdersList) -> list[OrderModel]:
+        created_orders = []
+        async with AsyncSession(engine) as session:
+            for order in orders_model.orders:
+                new_order = Order(**order.dict())
+                async with session.begin():
+                    session.add(new_order)
+                    await session.flush()
+                    created_orders.append(
+                        OrderModel(
+                            order_id=new_order.id,
+                            weight=new_order.weight,
+                            regions=new_order.regions,
+                            delivery_hours=new_order.delivery_hours,
+                            cost=new_order.cost,
+                            completed_time=new_order.completed_time,
+                        )
+                    )
+            await session.commit()
+        return created_orders
