@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from infrastructure.entities import Courier, engine, Order
 from models import (
+    CompleteOrderList,
     CourierModel,
     CouriersList,
     CouriersListResponse,
@@ -109,11 +110,46 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
                 completed_time=order.completed_time,
             )
 
-    async def get_orders(self, offset: int,
-                           limit: int) -> list[OrderModel]:
+    async def get_orders(self, *, offset: int, limit: int) -> list[OrderModel]:
         async with AsyncSession(engine) as session:
             async with session.begin():
                 stmt = select(Order).offset(offset).limit(limit)
+                result = await session.execute(stmt)
+                orders = result.scalars().all()
+                return [
+                    OrderModel(
+                        order_id=order.id,
+                        weight=order.weight,
+                        regions=order.regions,
+                        delivery_hours=order.delivery_hours,
+                        cost=order.cost,
+                        completed_time=order.completed_time,
+                    )
+                    for order in orders
+                ]
+
+    async def complete_orders(
+        self, *, complete_orders_model: CompleteOrderList
+    ) -> list[OrderModel]:
+        async with AsyncSession(engine) as session:
+            order_ids = [info.order_id for info in complete_orders_model.complete_info]
+            async with session.begin():
+                stmt = select(Order).filter(
+                    Order.id.in_(order_ids), Order.completed_time.is_(None)
+                )
+                result = await session.execute(stmt)
+                orders = result.scalars().all()
+                for order in orders:
+                    for info in complete_orders_model.complete_info:
+                        if info.order_id == order.id:
+                            order.completed_time = info.complete_time.replace(
+                                tzinfo=None
+                            )
+                            order.courier_id = info.courier_id
+                await session.commit()
+
+            async with session.begin():
+                stmt = select(Order).filter(Order.id.in_(order_ids))
                 result = await session.execute(stmt)
                 orders = result.scalars().all()
                 return [

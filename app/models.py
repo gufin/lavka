@@ -39,3 +39,13 @@ class OrderModel(BaseModel):
 
 class OrdersList(BaseModel):
     orders: list[OrderModel]
+
+
+class CompleteInfo(BaseModel):
+    courier_id: int
+    order_id: int
+    complete_time: datetime
+
+
+class CompleteOrderList(BaseModel):
+    complete_info: list[CompleteInfo]

@@ -2,7 +2,7 @@ from dependency_injector.wiring import inject, Provide
 from fastapi import APIRouter, Depends, Query
 
 from core.containers import Container
-from models import OrderModel, OrdersList
+from models import CompleteOrderList, OrderModel, OrdersList
 from services.use_cases.courier_service import CourierService
 
 router = APIRouter()
@@ -34,3 +34,14 @@ async def get_orders(
     courier_service: CourierService = Depends(Provide[Container.courier_service]),
 ) -> list[OrderModel]:
     return await courier_service.get_orders(offset=offset, limit=limit)
+
+
+@router.post("/orders/complete")
+@inject
+async def complete_orders(
+    complete_orders_model: CompleteOrderList,
+    courier_service: CourierService = Depends(Provide[Container.courier_service]),
+) -> list[OrderModel]:
+    return await courier_service.complete_orders(
+        complete_orders_model=complete_orders_model
+    )
