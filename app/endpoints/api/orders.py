@@ -1,5 +1,7 @@
 from dependency_injector.wiring import inject, Provide
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
+from pydantic import ValidationError
+from starlette.responses import JSONResponse
 
 from core.containers import Container
 from models import CompleteOrderList, OrderModel, OrdersList
@@ -11,20 +13,29 @@ router = APIRouter()
 @router.post("/orders")
 @inject
 async def create_orders(
-    orders_model: OrdersList,
+    request: Request,
     courier_service: CourierService = Depends(Provide[Container.courier_service]),
-) -> list[OrderModel]:
-    return await courier_service.create_orders(orders_model=orders_model)
-
+):
+    body = await request.json()
+    try:
+        orders_model = OrdersList.parse_obj(body)
+        return await courier_service.create_orders(orders_model=orders_model)
+    except ValidationError:
+        return JSONResponse(content={}, status_code=400)
 
 @router.get("/orders/{order_id}")
 @inject
 async def get_order(
-    order_id: int,
+    order_id,
     courier_service: CourierService = Depends(Provide[Container.courier_service]),
-) -> OrderModel:
-    return await courier_service.get_order(order_id=order_id)
-
+):
+    try:
+        correct_order_id = int(order_id)
+        result = await courier_service.get_order(order_id=correct_order_id)
+        return JSONResponse(content={},
+                        status_code=404) if result is None else result
+    except:
+        return JSONResponse(content={}, status_code=400)
 
 @router.get("/orders")
 @inject

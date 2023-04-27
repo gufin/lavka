@@ -1,8 +1,10 @@
 from dependency_injector.wiring import inject, Provide
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
+from pydantic import ValidationError
+from starlette.responses import JSONResponse
 
 from core.containers import Container
-from models import CourierModel, CouriersList, CouriersListResponse
+from models import CouriersList, CouriersListResponse
 from services.use_cases.courier_service import CourierService
 
 router = APIRouter()
@@ -11,19 +13,29 @@ router = APIRouter()
 @router.post("/couriers")
 @inject
 async def create_couriers(
-    couriers_model: CouriersList,
+    request: Request,
     courier_service: CourierService = Depends(Provide[Container.courier_service]),
-) -> CouriersList:
-    return await courier_service.create_couriers(couriers_model=couriers_model)
+):
+    body = await request.json()
+    try:
+        couriers_model = CouriersList.parse_obj(body)
+        return await courier_service.create_couriers(couriers_model=couriers_model)
+    except ValidationError:
+        return JSONResponse(content={}, status_code=400)
 
 
 @router.get("/couriers/{courier_id}")
 @inject
 async def get_courier(
-    courier_id: int,
+    courier_id,
     courier_service: CourierService = Depends(Provide[Container.courier_service]),
-) -> CourierModel:
-    return await courier_service.get_courier(courier_id=courier_id)
+):
+    try:
+        correct_courier_id = int(courier_id)
+        result = await courier_service.get_courier(courier_id=correct_courier_id)
+        return JSONResponse(content={}, status_code=404) if result is None else result
+    except:
+        return JSONResponse(content={}, status_code=400)
 
 
 @router.get("/couriers")
