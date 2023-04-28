@@ -1,4 +1,6 @@
-from sqlalchemy import select
+from datetime import datetime
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from infrastructure.entities import Courier, engine, Order
@@ -163,3 +165,18 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
                     )
                     for order in orders
                 ]
+
+    async def get_cost_sum_and_order_count(
+        self, courier_id: int, start_date: datetime, end_date: datetime
+    ):
+        async with AsyncSession(engine) as session:
+            async with session.begin():
+                stmt = (
+                    select(func.sum(Order.cost), func.count(Order.id))
+                    .where(Order.courier_id == courier_id)
+                    .where(Order.completed_time >= start_date)
+                    .where(Order.completed_time < end_date)
+                )
+                result = await session.execute(stmt)
+                cost_sum, order_count = result.one_or_none()
+                return cost_sum, order_count

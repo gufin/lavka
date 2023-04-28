@@ -23,6 +23,7 @@ async def create_orders(
     except ValidationError:
         return JSONResponse(content={}, status_code=400)
 
+
 @router.get("/orders/{order_id}")
 @inject
 async def get_order(
@@ -32,10 +33,10 @@ async def get_order(
     try:
         correct_order_id = int(order_id)
         result = await courier_service.get_order(order_id=correct_order_id)
-        return JSONResponse(content={},
-                        status_code=404) if result is None else result
+        return JSONResponse(content={}, status_code=404) if result is None else result
     except:
         return JSONResponse(content={}, status_code=400)
+
 
 @router.get("/orders")
 @inject

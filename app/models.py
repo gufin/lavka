@@ -49,3 +49,8 @@ class CompleteInfo(BaseModel):
 
 class CompleteOrderList(BaseModel):
     complete_info: list[CompleteInfo]
+
+
+class CourierMetaInfo(CourierModel):
+    earnings: int = Field(default=None)
+    rating: float = Field(default=None)

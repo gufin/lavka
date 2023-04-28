@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 
 from models import (
     CompleteOrderList,
@@ -39,4 +40,10 @@ class LavkaAbstractRepository(ABC):
     async def complete_orders(
         self, complete_orders_model: CompleteOrderList
     ) -> list[OrderModel]:
+        pass
+
+    @abstractmethod
+    async def get_cost_sum_and_order_count(
+        self, courier_id: int, start_date: datetime, end_date: datetime
+    ):
         pass
