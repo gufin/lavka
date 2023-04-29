@@ -16,15 +16,13 @@ router = APIRouter()
 @router.post("/couriers", dependencies=[Depends(rate_limiter)])
 @inject
 async def create_couriers(
-        request: Request,
-        courier_service: CourierService = Depends(
-            Provide[Container.courier_service]),
+    request: Request,
+    courier_service: CourierService = Depends(Provide[Container.courier_service]),
 ):
     body = await request.json()
     try:
         couriers_model = CouriersList.parse_obj(body)
-        return await courier_service.create_couriers(
-            couriers_model=couriers_model)
+        return await courier_service.create_couriers(couriers_model=couriers_model)
     except ValidationError:
         return JSONResponse(content={}, status_code=400)
 
@@ -32,16 +30,13 @@ async def create_couriers(
 @router.get("/couriers/{courier_id}", dependencies=[Depends(rate_limiter)])
 @inject
 async def get_courier(
-        courier_id,
-        courier_service: CourierService = Depends(
-            Provide[Container.courier_service]),
+    courier_id,
+    courier_service: CourierService = Depends(Provide[Container.courier_service]),
 ):
     try:
         correct_courier_id = int(courier_id)
-        result = await courier_service.get_courier(
-            courier_id=correct_courier_id)
-        return JSONResponse(content={},
-                            status_code=404) if result is None else result
+        result = await courier_service.get_courier(courier_id=correct_courier_id)
+        return JSONResponse(content={}, status_code=404) if result is None else result
     except:
         return JSONResponse(content={}, status_code=400)
 
@@ -49,23 +44,20 @@ async def get_courier(
 @router.get("/couriers", dependencies=[Depends(rate_limiter)])
 @inject
 async def get_couriers(
-        offset: int = Query(0, ge=0),
-        limit: int = Query(1, ge=1),
-        courier_service: CourierService = Depends(
-            Provide[Container.courier_service]),
+    offset: int = Query(0, ge=0),
+    limit: int = Query(1, ge=1),
+    courier_service: CourierService = Depends(Provide[Container.courier_service]),
 ) -> CouriersListResponse:
     return await courier_service.get_couriers(offset=offset, limit=limit)
 
 
-@router.get("/couriers/meta-info/{courier_id}",
-            dependencies=[Depends(rate_limiter)])
+@router.get("/couriers/meta-info/{courier_id}", dependencies=[Depends(rate_limiter)])
 @inject
 async def get_courier_meta_info(
-        courier_id,
-        start_date,
-        end_date,
-        courier_service: CourierService = Depends(
-            Provide[Container.courier_service]),
+    courier_id,
+    start_date,
+    end_date,
+    courier_service: CourierService = Depends(Provide[Container.courier_service]),
 ):
     try:
         correct_courier_id = int(courier_id)
@@ -76,7 +68,6 @@ async def get_courier_meta_info(
             start_date=correct_start_date,
             end_date=correct_end_date,
         )
-        return JSONResponse(content={},
-                            status_code=404) if result is None else result
+        return JSONResponse(content={}, status_code=404) if result is None else result
     except:
         return JSONResponse(content={}, status_code=400)
