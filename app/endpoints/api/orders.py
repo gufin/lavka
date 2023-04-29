@@ -6,11 +6,12 @@ from starlette.responses import JSONResponse
 from core.containers import Container
 from models import CompleteOrderList, OrderModel, OrdersList
 from services.use_cases.courier_service import CourierService
+from infrastructure.rate_limiter import rate_limiter
 
 router = APIRouter()
 
 
-@router.post("/orders")
+@router.post("/orders", dependencies=[Depends(rate_limiter)])
 @inject
 async def create_orders(
     request: Request,
@@ -24,7 +25,7 @@ async def create_orders(
         return JSONResponse(content={}, status_code=400)
 
 
-@router.get("/orders/{order_id}")
+@router.get("/orders/{order_id}", dependencies=[Depends(rate_limiter)])
 @inject
 async def get_order(
     order_id,
@@ -38,7 +39,7 @@ async def get_order(
         return JSONResponse(content={}, status_code=400)
 
 
-@router.get("/orders")
+@router.get("/orders", dependencies=[Depends(rate_limiter)])
 @inject
 async def get_orders(
     offset: int = Query(0, ge=0),
@@ -48,7 +49,7 @@ async def get_orders(
     return await courier_service.get_orders(offset=offset, limit=limit)
 
 
-@router.post("/orders/complete")
+@router.post("/orders/complete", dependencies=[Depends(rate_limiter)])
 @inject
 async def complete_orders(
     complete_orders_model: CompleteOrderList,
