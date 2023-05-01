@@ -1,13 +1,13 @@
 from datetime import datetime
 
 from dependency_injector.wiring import inject, Provide
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Request
 from pydantic import ValidationError
 from starlette.responses import JSONResponse
 
 from core.containers import Container
 from infrastructure.rate_limiter import rate_limiter
-from models import CouriersList, CouriersListResponse
+from models import CouriersList
 from services.use_cases.courier_service import CourierService
 
 router = APIRouter()
@@ -37,18 +37,27 @@ async def get_courier(
         correct_courier_id = int(courier_id)
         result = await courier_service.get_courier(courier_id=correct_courier_id)
         return JSONResponse(content={}, status_code=404) if result is None else result
-    except:
+    except ValueError:
         return JSONResponse(content={}, status_code=400)
 
 
 @router.get("/couriers", dependencies=[Depends(rate_limiter)])
 @inject
 async def get_couriers(
-    offset: int = Query(0, ge=0),
-    limit: int = Query(1, ge=1),
+    offset=0,
+    limit=1,
     courier_service: CourierService = Depends(Provide[Container.courier_service]),
-) -> CouriersListResponse:
-    return await courier_service.get_couriers(offset=offset, limit=limit)
+):
+    try:
+        correct_offset = int(offset)
+        correct_limit = int(limit)
+        if correct_offset >= 0 and correct_limit > 0:
+            return await courier_service.get_couriers(
+                offset=correct_offset, limit=correct_limit
+            )
+        return JSONResponse(content={}, status_code=400)
+    except ValueError:
+        return JSONResponse(content={}, status_code=400)
 
 
 @router.get("/couriers/meta-info/{courier_id}", dependencies=[Depends(rate_limiter)])
@@ -69,5 +78,5 @@ async def get_courier_meta_info(
             end_date=correct_end_date,
         )
         return JSONResponse(content={}, status_code=404) if result is None else result
-    except:
+    except ValueError:
         return JSONResponse(content={}, status_code=400)
