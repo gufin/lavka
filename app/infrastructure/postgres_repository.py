@@ -130,24 +130,32 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
                     for order in orders
                 ]
 
-    async def complete_orders(
-        self, *, complete_orders_model: CompleteOrderList
-    ) -> list[OrderModel]:
+    async def complete_orders(self, *, complete_orders_model: CompleteOrderList):
         async with AsyncSession(engine) as session:
             order_ids = [info.order_id for info in complete_orders_model.complete_info]
             async with session.begin():
-                stmt = select(Order).filter(
-                    Order.id.in_(order_ids), Order.completed_time.is_(None)
-                )
+                stmt = select(Order).filter(Order.id.in_(order_ids))
                 result = await session.execute(stmt)
-                orders = result.scalars().all()
-                for order in orders:
-                    for info in complete_orders_model.complete_info:
-                        if info.order_id == order.id:
+                orders = {order.id: order for order in result.scalars().all()}
+                for info in complete_orders_model.complete_info:
+                    order = orders.get(info.order_id)
+                    if order is None:
+                        return None
+                    if order.courier_id is None:
+                        current_courier = await self.get_courier(
+                            courier_id=info.courier_id
+                        )
+                        if current_courier is not None:
                             order.completed_time = info.complete_time.replace(
                                 tzinfo=None
                             )
                             order.courier_id = info.courier_id
+                    elif (
+                        order.courier_id != info.courier_id
+                        or order.completed_time
+                        != info.complete_time.replace(tzinfo=None)
+                    ):
+                        return None
                 await session.commit()
 
             async with session.begin():

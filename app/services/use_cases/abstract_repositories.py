@@ -37,9 +37,7 @@ class LavkaAbstractRepository(ABC):
         pass
 
     @abstractmethod
-    async def complete_orders(
-        self, complete_orders_model: CompleteOrderList
-    ) -> list[OrderModel]:
+    async def complete_orders(self, complete_orders_model: CompleteOrderList):
         pass
 
     @abstractmethod

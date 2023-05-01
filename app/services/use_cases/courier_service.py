@@ -35,9 +35,7 @@ class CourierService:
     async def get_orders(self, offset: int, limit: int) -> list[OrderModel]:
         return await self.repository.get_orders(offset=offset, limit=limit)
 
-    async def complete_orders(
-        self, complete_orders_model: CompleteOrderList
-    ) -> list[OrderModel]:
+    async def complete_orders(self, complete_orders_model: CompleteOrderList):
         return await self.repository.complete_orders(
             complete_orders_model=complete_orders_model
         )

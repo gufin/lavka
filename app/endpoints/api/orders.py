@@ -54,7 +54,8 @@ async def get_orders(
 async def complete_orders(
     complete_orders_model: CompleteOrderList,
     courier_service: CourierService = Depends(Provide[Container.courier_service]),
-) -> list[OrderModel]:
-    return await courier_service.complete_orders(
+):
+    result = await courier_service.complete_orders(
         complete_orders_model=complete_orders_model
     )
+    return JSONResponse(content={}, status_code=400) if result is None else result
