@@ -13,7 +13,9 @@ from models import (
 
 class LavkaAbstractRepository(ABC):
     @abstractmethod
-    async def create_couriers(self, *, couriers_model: CouriersList) -> CouriersList:
+    async def create_couriers(
+        self, *, couriers_model: CouriersList
+    ) -> CouriersList:
         pass
 
     @abstractmethod
@@ -21,11 +23,15 @@ class LavkaAbstractRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_couriers(self, offset: int, limit: int) -> CouriersListResponse:
+    async def get_couriers(
+        self, offset: int, limit: int
+    ) -> CouriersListResponse:
         pass
 
     @abstractmethod
-    async def create_orders(self, orders_model: OrdersList) -> list[OrderModel]:
+    async def create_orders(
+        self, orders_model: OrdersList
+    ) -> list[OrderModel]:
         pass
 
     @abstractmethod

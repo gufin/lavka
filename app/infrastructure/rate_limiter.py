@@ -15,7 +15,8 @@ def rate_limiter(request: Request):
         RATE_LIMITS[ip_address] = {"count": 0, "start_time": datetime.now()}
     if (
         RATE_LIMITS[ip_address]["count"] >= LIMIT
-        and datetime.now() - RATE_LIMITS[ip_address]["start_time"] <= TIME_WINDOW
+        and datetime.now() - RATE_LIMITS[ip_address]["start_time"]
+        <= TIME_WINDOW
     ):
         raise HTTPException(status_code=429, detail="Too Many Requests")
     RATE_LIMITS[ip_address]["count"] += 1

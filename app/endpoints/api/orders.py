@@ -15,7 +15,9 @@ router = APIRouter()
 @inject
 async def create_orders(
     request: Request,
-    courier_service: CourierService = Depends(Provide[Container.courier_service]),
+    courier_service: CourierService = Depends(
+        Provide[Container.courier_service]
+    ),
 ):
     body = await request.json()
     try:
@@ -29,12 +31,18 @@ async def create_orders(
 @inject
 async def get_order(
     order_id,
-    courier_service: CourierService = Depends(Provide[Container.courier_service]),
+    courier_service: CourierService = Depends(
+        Provide[Container.courier_service]
+    ),
 ):
     try:
         correct_order_id = int(order_id)
         result = await courier_service.get_order(order_id=correct_order_id)
-        return JSONResponse(content={}, status_code=404) if result is None else result
+        return (
+            JSONResponse(content={}, status_code=404)
+            if result is None
+            else result
+        )
     except ValueError:
         return JSONResponse(content={}, status_code=400)
 
@@ -44,7 +52,9 @@ async def get_order(
 async def get_orders(
     offset=0,
     limit=1,
-    courier_service: CourierService = Depends(Provide[Container.courier_service]),
+    courier_service: CourierService = Depends(
+        Provide[Container.courier_service]
+    ),
 ):
     try:
         correct_offset = int(offset)
@@ -60,7 +70,9 @@ async def get_orders(
 @inject
 async def complete_orders(
     request: Request,
-    courier_service: CourierService = Depends(Provide[Container.courier_service]),
+    courier_service: CourierService = Depends(
+        Provide[Container.courier_service]
+    ),
 ):
     body = await request.json()
     try:
@@ -68,6 +80,10 @@ async def complete_orders(
         result = await courier_service.complete_orders(
             complete_orders_model=complete_orders_model
         )
-        return JSONResponse(content={}, status_code=400) if result is None else result
+        return (
+            JSONResponse(content={}, status_code=400)
+            if result is None
+            else result
+        )
     except ValidationError:
         return JSONResponse(content={}, status_code=400)

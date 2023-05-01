@@ -19,7 +19,9 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
     def __init__(self, *, config: dict):
         self.config = config
 
-    async def create_couriers(self, *, couriers_model: CouriersList) -> CouriersList:
+    async def create_couriers(
+        self, *, couriers_model: CouriersList
+    ) -> CouriersList:
         created_couriers = []
         async with AsyncSession(engine) as session:
             for courier in couriers_model.couriers:
@@ -54,7 +56,9 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
                 working_hours=courier.working_hours,
             )
 
-    async def get_couriers(self, offset: int, limit: int) -> CouriersListResponse:
+    async def get_couriers(
+        self, offset: int, limit: int
+    ) -> CouriersListResponse:
         async with AsyncSession(engine) as session:
             async with session.begin():
                 stmt = select(Courier).offset(offset).limit(limit)
@@ -73,7 +77,9 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
                     couriers=couriers_models, limit=limit, offset=offset
                 )
 
-    async def create_orders(self, *, orders_model: OrdersList) -> list[OrderModel]:
+    async def create_orders(
+        self, *, orders_model: OrdersList
+    ) -> list[OrderModel]:
         created_orders = []
         async with AsyncSession(engine) as session:
             for order in orders_model.orders:
@@ -130,9 +136,13 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
                     for order in orders
                 ]
 
-    async def complete_orders(self, *, complete_orders_model: CompleteOrderList):
+    async def complete_orders(
+        self, *, complete_orders_model: CompleteOrderList
+    ):
         async with AsyncSession(engine) as session:
-            order_ids = [info.order_id for info in complete_orders_model.complete_info]
+            order_ids = [
+                info.order_id for info in complete_orders_model.complete_info
+            ]
             async with session.begin():
                 stmt = select(Order).filter(Order.id.in_(order_ids))
                 result = await session.execute(stmt)
@@ -148,7 +158,7 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
                         if current_courier is not None:
                             order.completed_time = info.complete_time.replace(
                                 tzinfo=None
-                            )
+                            )  # TODO разобраться с таймзонами
                             order.courier_id = info.courier_id
                     elif (
                         order.courier_id != info.courier_id

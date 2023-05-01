@@ -1,3 +1,4 @@
+# TODO исправить flake8
 import asyncio
 from dataclasses import dataclass
 
@@ -8,15 +9,17 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-service_api_url = "http://127.0.0.1:8080"
+service_api_url = "http://127.0.0.1:8080"  # TODO заменить на настройки
 
 
 @pytest.fixture(autouse=True)
 async def setup_database():
     DATABASE_URL = "postgresql+asyncpg://postgres:example@127.0.0.1/postgres"
-
+    # TODO заменить на настройки
     engine = create_async_engine(DATABASE_URL)
-    async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async_session = sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
 
     async with async_session() as session:
         async with session.begin():
@@ -25,7 +28,9 @@ async def setup_database():
                 text("ALTER SEQUENCE couriers_id_seq RESTART WITH 1;")
             )
             await session.execute(text("TRUNCATE TABLE orders CASCADE;"))
-            await session.execute(text("ALTER SEQUENCE orders_id_seq RESTART WITH 1;"))
+            await session.execute(
+                text("ALTER SEQUENCE orders_id_seq RESTART WITH 1;")
+            )
             await session.commit()
 
 

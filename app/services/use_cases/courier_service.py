@@ -17,16 +17,24 @@ class CourierService:
     def __init__(self, repository: LavkaAbstractRepository):
         self.repository = repository
 
-    async def create_couriers(self, *, couriers_model: CouriersList) -> CouriersList:
-        return await self.repository.create_couriers(couriers_model=couriers_model)
+    async def create_couriers(
+        self, *, couriers_model: CouriersList
+    ) -> CouriersList:
+        return await self.repository.create_couriers(
+            couriers_model=couriers_model
+        )
 
     async def get_courier(self, *, courier_id: int) -> CourierModel:
         return await self.repository.get_courier(courier_id=courier_id)
 
-    async def get_couriers(self, offset: int, limit: int) -> CouriersListResponse:
+    async def get_couriers(
+        self, offset: int, limit: int
+    ) -> CouriersListResponse:
         return await self.repository.get_couriers(offset=offset, limit=limit)
 
-    async def create_orders(self, *, orders_model: OrdersList) -> list[OrderModel]:
+    async def create_orders(
+        self, *, orders_model: OrdersList
+    ) -> list[OrderModel]:
         return await self.repository.create_orders(orders_model=orders_model)
 
     async def get_order(self, *, order_id: int) -> OrderModel:
@@ -56,7 +64,11 @@ class CourierService:
         rating__coefficient = self.get_courier_type_rating_coefficient(
             courier_type=courier.courier_type
         )
-        earnings = None if completed_orders == 0 else sum_of_orders * salary_coefficient
+        earnings = (
+            None
+            if completed_orders == 0
+            else sum_of_orders * salary_coefficient
+        )
 
         if completed_orders == 0:
             rating = None

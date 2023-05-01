@@ -346,9 +346,13 @@ async def test_get_courier_meta_info_different_period(make_get_request):
 
 
 async def test_get_courier_meta_info_missing_params(make_get_request):
-    response = await make_get_request("/couriers/meta-info/1?start_date=2023-04-01")
+    response = await make_get_request(
+        "/couriers/meta-info/1?start_date=2023-04-01"
+    )
     assert response.status == 422
-    response = await make_get_request("/couriers/meta-info/1?end_date=2023-05-01")
+    response = await make_get_request(
+        "/couriers/meta-info/1?end_date=2023-05-01"
+    )
     assert response.status == 422
     response = await make_get_request("/couriers/meta-info/1")
     assert response.status == 422
@@ -368,6 +372,8 @@ async def test_get_courier_meta_info_invalid_params(make_get_request):
         "/couriers/meta-info/e?start_date=2023-04-01&end_date=2023-05-01"
     )
     assert response.status == 400
-    response = await make_get_request("/couriers/meta-info/e?start_date=e&end_date=e")
+    response = await make_get_request(
+        "/couriers/meta-info/e?start_date=e&end_date=e"
+    )
     assert response.status == 400
     await asyncio.sleep(1)
