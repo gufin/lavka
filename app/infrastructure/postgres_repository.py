@@ -1,14 +1,23 @@
-from datetime import datetime
+import itertools
+from datetime import datetime, timedelta
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, null, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from infrastructure.entities import Courier, engine, Order
+from infrastructure.entities import (
+    Courier,
+    engine,
+    Order,
+    OrderDeliverySchedule,
+)
 from models import (
     CompleteOrderList,
     CourierModel,
+    CourierScheduleModel,
     CouriersList,
     CouriersListResponse,
+    DeliveryScheduleModel,
+    GroupOrderModel,
     OrderModel,
     OrdersList,
 )
@@ -198,3 +207,127 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
                 result = await session.execute(stmt)
                 cost_sum, order_count = result.one_or_none()
                 return cost_sum, order_count
+
+    async def get_orders_to_assign(self, date: datetime) -> list[OrderModel]:
+        start_of_day = date.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_of_day = start_of_day + timedelta(days=1)
+        async with AsyncSession(engine) as session:
+            async with session.begin():
+                stmt = (
+                    select(Order)
+                    .filter(
+                        and_(
+                            Order.created_at >= start_of_day,
+                            Order.created_at <= end_of_day,
+                        )
+                    )
+                    .filter(Order.courier_id == null())
+                )
+                result = await session.execute(stmt)
+                orders = result.scalars().all()
+                return [
+                    OrderModel(
+                        order_id=order.id,
+                        weight=order.weight,
+                        regions=order.regions,
+                        delivery_hours=order.delivery_hours,
+                        cost=order.cost,
+                        completed_time=order.completed_time,
+                    )
+                    for order in orders
+                ]
+
+    async def save_schedule(self, courier_time_slots: dict, date: datetime):
+        async with AsyncSession(engine) as session:
+            async with session.begin():
+                for courier, value in courier_time_slots.items():
+                    for schedule_record in value:
+                        for group_order_id, order in enumerate(
+                            schedule_record[1]
+                        ):
+                            new_schedule_record = OrderDeliverySchedule(
+                                courier_id=courier,
+                                date=date,
+                                order_id=order,
+                                group_order_id=group_order_id,
+                                group_time=schedule_record[0],
+                                group_weight=schedule_record[2],
+                                group_cost=schedule_record[3],
+                            )
+                            session.add(new_schedule_record)
+                await session.commit()
+        async with AsyncSession(engine) as session:
+            async with session.begin():
+                stmt = (
+                    select(OrderDeliverySchedule, Courier, Order)
+                    .select_from(
+                        OrderDeliverySchedule.__table__.join(
+                            Courier,
+                            OrderDeliverySchedule.courier_id == Courier.id,
+                        ).join(
+                            Order, OrderDeliverySchedule.order_id == Order.id
+                        )
+                    )
+                    .order_by(
+                        OrderDeliverySchedule.date,
+                        OrderDeliverySchedule.courier_id,
+                        OrderDeliverySchedule.group_order_id,
+                    )
+                )
+                result_proxy = await session.execute(stmt)
+                schedules = result_proxy.fetchall()
+                result_proxy.close()
+                result = []
+                for date, courier_schedule in itertools.groupby(
+                    schedules,
+                    key=lambda x: x.OrderDeliverySchedule.date.date(),
+                ):
+                    couriers = []
+                    for courier_id, group_orders in itertools.groupby(
+                        courier_schedule,
+                        key=lambda x: x.OrderDeliverySchedule.courier_id,
+                    ):
+                        groups = []
+                        for group_id, orders in itertools.groupby(
+                            group_orders,
+                            key=lambda x: x.OrderDeliverySchedule.group_order_id,
+                        ):
+                            order_models = [
+                                OrderModel(
+                                    order_id=order.Order.id,
+                                    weight=order.Order.weight,
+                                    regions=order.Order.regions,
+                                    delivery_hours=order.Order.delivery_hours,
+                                    cost=order.Order.cost,
+                                    completed_time=order.Order.completed_time,
+                                )
+                                for order in orders
+                            ]
+                            groups.append(
+                                GroupOrderModel(
+                                    group_order_id=group_id,
+                                    orders=order_models,
+                                )
+                            )
+                        couriers.append(
+                            CourierScheduleModel(
+                                courier_id=courier_id, orders=groups
+                            )
+                        )
+                    result.append(
+                        DeliveryScheduleModel(
+                            date=date.isoformat(), couriers=couriers
+                        )
+                    )
+
+                return result[0]
+
+    async def get_count_of_schedule(self, date: datetime) -> int:
+        async with AsyncSession(engine) as session:
+            async with session.begin():
+                stmt = select(func.count(OrderDeliverySchedule.id)).filter(
+                    func.date(OrderDeliverySchedule.date) == date.date()
+                )
+
+                result_proxy = await session.execute(stmt)
+                return result_proxy.scalar()

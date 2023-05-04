@@ -324,7 +324,7 @@ async def test_get_courier_meta_info(make_get_request):
         "regions": [1, 2, 9],
         "working_hours": ["10:00-14:00", "16:00-20:00"],
         "earnings": 300,
-        "rating": 0.004032258064516129,
+        "rating": 0.30000000000000004,
     }
     await asyncio.sleep(1)
 

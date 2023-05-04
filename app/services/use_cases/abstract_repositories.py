@@ -51,3 +51,15 @@ class LavkaAbstractRepository(ABC):
         self, courier_id: int, start_date: datetime, end_date: datetime
     ):
         pass
+
+    @abstractmethod
+    async def get_orders_to_assign(self, date: datetime) -> list[OrderModel]:
+        pass
+
+    @abstractmethod
+    async def save_schedule(self, courier_time_slots: dict, date: datetime):
+        pass
+
+    @abstractmethod
+    async def get_count_of_schedule(self, date: datetime) -> int:
+        pass

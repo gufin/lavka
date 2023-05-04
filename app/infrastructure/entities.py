@@ -2,6 +2,7 @@ from sqlalchemy import (
     Column,
     Float,
     ForeignKey,
+    func,
     Integer,
     String,
     Enum,
@@ -39,3 +40,17 @@ class Order(Base):
     delivery_hours = Column(ARRAY(String), nullable=False)
     cost = Column(Float, nullable=False)
     completed_time = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=func.now())
+
+
+class OrderDeliverySchedule(Base):
+    __tablename__ = "orders_delivery_schedule"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    date = Column(DateTime, nullable=False)
+    courier_id = Column(Integer, ForeignKey("couriers.id"), nullable=False)
+    order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
+    group_order_id = Column(Integer, nullable=False)
+    group_time = Column(DateTime, nullable=True)
+    group_weight = Column(Float, nullable=False)
+    group_cost = Column(Float, nullable=False)

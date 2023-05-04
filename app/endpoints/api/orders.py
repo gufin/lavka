@@ -1,3 +1,5 @@
+import datetime
+
 from dependency_injector.wiring import inject, Provide
 from fastapi import APIRouter, Depends, Request
 from pydantic import ValidationError
@@ -87,3 +89,26 @@ async def complete_orders(
         )
     except ValidationError:
         return JSONResponse(content={}, status_code=400)
+
+
+@router.post("/orders/assign", dependencies=[Depends(rate_limiter)])
+@inject
+async def assign_orders(
+    date=datetime.datetime.now(),
+    courier_service: CourierService = Depends(
+        Provide[Container.courier_service]
+    ),
+):
+    if type(date) != datetime.datetime:
+        try:
+            correct_date = datetime.datetime.strptime(date, "%Y-%m-%d")
+        except ValidationError:
+            return JSONResponse(content={}, status_code=400)
+    else:
+        correct_date = date
+    result = await courier_service.assign_orders(date=correct_date)
+    return (
+        JSONResponse(content={}, status_code=400)
+        if result is None
+        else JSONResponse(content=result.dict(), status_code=201)
+    )

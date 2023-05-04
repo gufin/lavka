@@ -5,9 +5,11 @@ from starlette import status
 router = APIRouter()
 
 
-@router.get("/ping", name="dev:ping", status_code=status.HTTP_200_OK)# noqa F811
-async def ping(): # noqa F811
-    return "pong"# noqa F811
+@router.get(
+    "/ping", name="dev:ping", status_code=status.HTTP_200_OK
+)  # noqa F811
+async def ping():  # noqa F811
+    return "pong"  # noqa F811
 
 
 @router.post(

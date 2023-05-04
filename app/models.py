@@ -54,3 +54,18 @@ class CompleteOrderList(BaseModel):
 class CourierMetaInfo(CourierModel):
     earnings: int = Field(default=None)
     rating: float = Field(default=None)
+
+
+class GroupOrderModel(BaseModel):
+    group_order_id: int
+    orders: list[OrderModel]
+
+
+class CourierScheduleModel(BaseModel):
+    courier_id: int
+    orders: list[GroupOrderModel]
+
+
+class DeliveryScheduleModel(BaseModel):
+    date: str
+    couriers: list[CourierScheduleModel]
