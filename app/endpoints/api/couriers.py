@@ -102,3 +102,32 @@ async def get_courier_meta_info(
         )
     except ValueError:
         return JSONResponse(content={}, status_code=400)
+
+
+
+@router.get(
+    "/couriers/assignments", dependencies=[Depends(rate_limiter)]
+)
+@inject
+async def get_couriers_assignments(
+    courier_id=-1,
+    date=datetime.now(),
+    courier_service: CourierService = Depends(
+        Provide[Container.courier_service]
+    ),
+):
+    try:
+        correct_courier_id = int(courier_id)
+        if type(date) != datetime:
+            correct_date = datetime.strptime(date, "%Y-%m-%d")
+        else:
+            correct_date = date
+        result = await courier_service.get_couriers_assignments(
+            courier_id=correct_courier_id, date=correct_date)
+        return (
+            JSONResponse(content={}, status_code=404)
+            if result is None
+            else result
+        )
+    except ValueError:
+        return JSONResponse(content={}, status_code=400)

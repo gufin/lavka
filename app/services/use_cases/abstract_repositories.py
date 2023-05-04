@@ -63,3 +63,7 @@ class LavkaAbstractRepository(ABC):
     @abstractmethod
     async def get_count_of_schedule(self, date: datetime) -> int:
         pass
+
+    @abstractmethod
+    async def get_couriers_assignments(self, courier_id: int, date: datetime):
+        pass

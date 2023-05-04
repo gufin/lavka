@@ -335,3 +335,6 @@ class CourierService:
                 "delivery_cost": [1.0, 0.8],
             },
         }
+
+    async def get_couriers_assignments(self, courier_id: int, date: datetime):
+        return await self.repository.get_couriers_assignments(courier_id=courier_id, date=date)
