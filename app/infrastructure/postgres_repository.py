@@ -347,8 +347,7 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
                     )
                     .filter(
                         and_(
-                            func.date(
-                                OrderDeliverySchedule.date) == date,
+                            func.date(OrderDeliverySchedule.date) == date,
                             Courier.id > -1 if courier_id > -1 else True,
                         )
                     )
@@ -363,19 +362,18 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
                 result_proxy.close()
                 result = []
                 for date, courier_schedule in itertools.groupby(
-                        schedules,
-                        key=lambda x: x.OrderDeliverySchedule.date.date(),
+                    schedules,
+                    key=lambda x: x.OrderDeliverySchedule.date.date(),
                 ):
                     couriers = []
                     for courier_id, group_orders in itertools.groupby(
-                            courier_schedule,
-                            key=lambda x: x.OrderDeliverySchedule.courier_id,
+                        courier_schedule,
+                        key=lambda x: x.OrderDeliverySchedule.courier_id,
                     ):
                         groups = []
                         for group_id, orders in itertools.groupby(
-                                group_orders,
-                                key=lambda
-                                        x: x.OrderDeliverySchedule.group_order_id,
+                            group_orders,
+                            key=lambda x: x.OrderDeliverySchedule.group_order_id,
                         ):
                             order_models = [
                                 OrderModel(

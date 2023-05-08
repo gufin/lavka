@@ -28,7 +28,9 @@ async def create_couriers(
             couriers_model=couriers_model
         )
     except ValidationError:
-        return JSONResponse(content={}, status_code=400)
+        return JSONResponse(
+            content={"detail": "Invalid data provided."}, status_code=400
+        )
 
 
 @router.get("/couriers/{courier_id}", dependencies=[Depends(rate_limiter)])
@@ -41,16 +43,16 @@ async def get_courier(
 ):
     try:
         correct_courier_id = int(courier_id)
-        result = await courier_service.get_courier(
-            courier_id=correct_courier_id
-        )
-        return (
-            JSONResponse(content={}, status_code=404)
-            if result is None
-            else result
-        )
     except ValueError:
-        return JSONResponse(content={}, status_code=400)
+        return JSONResponse(
+            content={"detail": "Invalid data provided."}, status_code=400
+        )
+    result = await courier_service.get_courier(courier_id=correct_courier_id)
+    return (
+        JSONResponse(content={"detail": "Courier not found."}, status_code=404)
+        if result is None
+        else result
+    )
 
 
 @router.get("/couriers", dependencies=[Depends(rate_limiter)])
@@ -65,13 +67,17 @@ async def get_couriers(
     try:
         correct_offset = int(offset)
         correct_limit = int(limit)
-        if correct_offset >= 0 and correct_limit > 0:
-            return await courier_service.get_couriers(
-                offset=correct_offset, limit=correct_limit
+        if correct_offset < 0 or correct_limit < 0:
+            return JSONResponse(
+                content={"detail": "Invalid data provided."}, status_code=400
             )
-        return JSONResponse(content={}, status_code=400)
     except ValueError:
-        return JSONResponse(content={}, status_code=400)
+        return JSONResponse(
+            content={"detail": "Invalid data provided."}, status_code=400
+        )
+    return await courier_service.get_couriers(
+        offset=correct_offset, limit=correct_limit
+    )
 
 
 @router.get(
@@ -90,44 +96,50 @@ async def get_courier_meta_info(
         correct_courier_id = int(courier_id)
         correct_start_date = datetime.strptime(start_date, "%Y-%m-%d")
         correct_end_date = datetime.strptime(end_date, "%Y-%m-%d")
-        result = await courier_service.get_courier_meta_info(
-            courier_id=correct_courier_id,
-            start_date=correct_start_date,
-            end_date=correct_end_date,
-        )
-        return (
-            JSONResponse(content={}, status_code=404)
-            if result is None
-            else result
-        )
     except ValueError:
-        return JSONResponse(content={}, status_code=400)
+        return JSONResponse(
+            content={"detail": "Invalid data provided."}, status_code=400
+        )
+
+    result = await courier_service.get_courier_meta_info(
+        courier_id=correct_courier_id,
+        start_date=correct_start_date,
+        end_date=correct_end_date,
+    )
+    return (
+        JSONResponse(content={"detail": "Courier not found."}, status_code=404)
+        if result is None
+        else result
+    )
 
 
-
-@router.get(
-    "/couriers/assignments", dependencies=[Depends(rate_limiter)]
-)
+@router.get("/couriers/assignments", dependencies=[Depends(rate_limiter)])
 @inject
 async def get_couriers_assignments(
     courier_id=-1,
-    date=datetime.now(),
+    date=None,
     courier_service: CourierService = Depends(
         Provide[Container.courier_service]
     ),
 ):
+    if date is None:
+        date = datetime.now()
     try:
         correct_courier_id = int(courier_id)
-        if type(date) != datetime:
-            correct_date = datetime.strptime(date, "%Y-%m-%d")
-        else:
+        if isinstance(date, datetime):
             correct_date = date
-        result = await courier_service.get_couriers_assignments(
-            courier_id=correct_courier_id, date=correct_date)
-        return (
-            JSONResponse(content={}, status_code=404)
-            if result is None
-            else result
-        )
+        else:
+            correct_date = datetime.strptime(date, "%Y-%m-%d")
     except ValueError:
-        return JSONResponse(content={}, status_code=400)
+        return JSONResponse(
+            content={"detail": "Invalid data provided."}, status_code=400
+        )
+
+    result = await courier_service.get_couriers_assignments(
+        courier_id=correct_courier_id, date=correct_date
+    )
+    return (
+        JSONResponse(content={"detail": "Courier not found."}, status_code=404)
+        if result is None
+        else result
+    )

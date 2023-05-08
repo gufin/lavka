@@ -34,6 +34,77 @@ async def setup_database():
             await session.commit()
 
 
+@pytest.fixture(autouse=True)
+async def create_couriers(make_post_request):
+    await make_post_request(
+        "/couriers",
+        params={
+            "couriers": [
+                {
+                    "courier_type": "FOOT",
+                    "regions": [1, 2, 9],
+                    "working_hours": ["10:00-14:00", "16:00-20:00"],
+                },
+                {
+                    "courier_type": "BIKE",
+                    "regions": [4, 5, 6],
+                    "working_hours": ["09:00-13:00", "15:00-19:00"],
+                },
+                {
+                    "courier_type": "AUTO",
+                    "regions": [7, 8, 17],
+                    "working_hours": ["08:00-12:00", "14:00-18:00"],
+                },
+            ]
+        },
+    )
+
+
+@pytest.fixture(autouse=True)
+async def create_orders(make_post_request):
+    await make_post_request(
+        "/orders",
+        params={
+            "orders": [
+                {
+                    "weight": 1.5,
+                    "regions": 1,
+                    "delivery_hours": ["09:00-12:00"],
+                    "cost": 150,
+                },
+                {
+                    "weight": 3.2,
+                    "regions": 2,
+                    "delivery_hours": ["14:00-18:00", "19:00-22:00"],
+                    "cost": 250,
+                },
+                {
+                    "weight": 0.8,
+                    "regions": 1,
+                    "delivery_hours": ["10:00-11:00", "13:00-14:00"],
+                    "cost": 100,
+                },
+            ]
+        },
+    )
+
+
+@pytest.fixture(autouse=True)
+async def complete_orders(make_post_request):
+    await make_post_request(
+        "/orders/complete",
+        params={
+            "complete_info": [
+                {
+                    "courier_id": 1,
+                    "order_id": 1,
+                    "complete_time": "2023-05-01T12:00:00.000Z",
+                }
+            ]
+        },
+    )
+
+
 @dataclass
 class HTTPResponse:
     body: dict
