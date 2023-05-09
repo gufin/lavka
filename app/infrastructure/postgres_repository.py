@@ -1,5 +1,6 @@
 import itertools
 from datetime import datetime, timedelta
+from typing import Optional
 
 from sqlalchemy import and_, func, null, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -109,7 +110,7 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
             await session.commit()
         return created_orders
 
-    async def get_order(self, *, order_id: int) -> OrderModel:
+    async def get_order(self, *, order_id: int) -> Optional[OrderModel]:
         async with AsyncSession(engine) as session:
             stmt = select(Order).where(Order.id == order_id)
             result = await session.execute(stmt)
@@ -275,52 +276,11 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
                     )
                 )
                 result_proxy = await session.execute(stmt)
-                schedules = result_proxy.fetchall()
-                result_proxy.close()
-                result = []
-                for date, courier_schedule in itertools.groupby(
-                    schedules,
-                    key=lambda x: x.OrderDeliverySchedule.date.date(),
-                ):
-                    couriers = []
-                    for courier_id, group_orders in itertools.groupby(
-                        courier_schedule,
-                        key=lambda x: x.OrderDeliverySchedule.courier_id,
-                    ):
-                        groups = []
-                        for group_id, orders in itertools.groupby(
-                            group_orders,
-                            key=lambda x: x.OrderDeliverySchedule.group_order_id,
-                        ):
-                            order_models = [
-                                OrderModel(
-                                    order_id=order.Order.id,
-                                    weight=order.Order.weight,
-                                    regions=order.Order.regions,
-                                    delivery_hours=order.Order.delivery_hours,
-                                    cost=order.Order.cost,
-                                    completed_time=order.Order.completed_time,
-                                )
-                                for order in orders
-                            ]
-                            groups.append(
-                                GroupOrderModel(
-                                    group_order_id=group_id,
-                                    orders=order_models,
-                                )
-                            )
-                        couriers.append(
-                            CourierScheduleModel(
-                                courier_id=courier_id, orders=groups
-                            )
-                        )
-                    result.append(
-                        DeliveryScheduleModel(
-                            date=date.isoformat(), couriers=couriers
-                        )
-                    )
+                result = self.transform_assignment_result(
+                    result_proxy=result_proxy
+                )
 
-                return result[0]
+                return result[0] if result else None
 
     async def get_count_of_schedule(self, date: datetime) -> int:
         async with AsyncSession(engine) as session:
@@ -348,7 +308,9 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
                     .filter(
                         and_(
                             func.date(OrderDeliverySchedule.date) == date,
-                            Courier.id > -1 if courier_id > -1 else True,
+                            Courier.id == courier_id
+                            if courier_id > -1
+                            else True,
                         )
                     )
                     .order_by(
@@ -358,49 +320,51 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
                     )
                 )
                 result_proxy = await session.execute(stmt)
-                schedules = result_proxy.fetchall()
-                result_proxy.close()
-                result = []
-                for date, courier_schedule in itertools.groupby(
-                    schedules,
-                    key=lambda x: x.OrderDeliverySchedule.date.date(),
+                result = self.transform_assignment_result(
+                    result_proxy=result_proxy
+                )
+                return result[0] if result else None
+
+    @staticmethod
+    def transform_assignment_result(result_proxy):
+        schedules = result_proxy.fetchall()
+        result_proxy.close()
+        result = []
+        for date, courier_schedule in itertools.groupby(
+            schedules,
+            key=lambda x: x.OrderDeliverySchedule.date.date(),
+        ):
+            couriers = []
+            for courier_id, group_orders in itertools.groupby(
+                courier_schedule,
+                key=lambda x: x.OrderDeliverySchedule.courier_id,
+            ):
+                groups = []
+                for group_id, orders in itertools.groupby(
+                    group_orders,
+                    key=lambda x: x.OrderDeliverySchedule.group_order_id,
                 ):
-                    couriers = []
-                    for courier_id, group_orders in itertools.groupby(
-                        courier_schedule,
-                        key=lambda x: x.OrderDeliverySchedule.courier_id,
-                    ):
-                        groups = []
-                        for group_id, orders in itertools.groupby(
-                            group_orders,
-                            key=lambda x: x.OrderDeliverySchedule.group_order_id,
-                        ):
-                            order_models = [
-                                OrderModel(
-                                    order_id=order.Order.id,
-                                    weight=order.Order.weight,
-                                    regions=order.Order.regions,
-                                    delivery_hours=order.Order.delivery_hours,
-                                    cost=order.Order.cost,
-                                    completed_time=order.Order.completed_time,
-                                )
-                                for order in orders
-                            ]
-                            groups.append(
-                                GroupOrderModel(
-                                    group_order_id=group_id,
-                                    orders=order_models,
-                                )
-                            )
-                        couriers.append(
-                            CourierScheduleModel(
-                                courier_id=courier_id, orders=groups
-                            )
+                    order_models = [
+                        OrderModel(
+                            order_id=order.Order.id,
+                            weight=order.Order.weight,
+                            regions=order.Order.regions,
+                            delivery_hours=order.Order.delivery_hours,
+                            cost=order.Order.cost,
+                            completed_time=order.Order.completed_time,
                         )
-                    result.append(
-                        DeliveryScheduleModel(
-                            date=date.isoformat(), couriers=couriers
+                        for order in orders
+                    ]
+                    groups.append(
+                        GroupOrderModel(
+                            group_order_id=group_id,
+                            orders=order_models,
                         )
                     )
-
-                return result[0]
+                couriers.append(
+                    CourierScheduleModel(courier_id=courier_id, orders=groups)
+                )
+            result.append(
+                DeliveryScheduleModel(date=date.isoformat(), couriers=couriers)
+            )
+            return result

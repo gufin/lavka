@@ -105,6 +105,11 @@ async def complete_orders(make_post_request):
     )
 
 
+@pytest.fixture(autouse=True)
+async def assign_orders(make_post_request):
+    await make_post_request("/orders/assign")
+
+
 @dataclass
 class HTTPResponse:
     body: dict

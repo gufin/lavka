@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 
 import pytest
 from pytest import approx
@@ -364,3 +365,159 @@ async def test_get_courier_meta_info_invalid_params(
     )
     assert response.status == 400
     await asyncio.sleep(1)
+
+
+async def test_get_couriers_assignments(
+    make_get_request,
+    setup_database,
+    create_couriers,
+    create_orders,
+    assign_orders,
+):
+    await setup_database
+    await create_couriers
+    await create_orders
+    await assign_orders
+    response = await make_get_request("/couriers/assignments")
+    assert response.status == 200
+    assert response.body == {
+        "date": datetime.now().strftime("%Y-%m-%d"),
+        "couriers": [
+            {
+                "courier_id": 1,
+                "orders": [
+                    {
+                        "group_order_id": 0,
+                        "orders": [
+                            {
+                                "order_id": 1,
+                                "weight": 1.5,
+                                "regions": 1,
+                                "delivery_hours": ["09:00-12:00"],
+                                "cost": 150.0,
+                                "completed_time": None,
+                            }
+                        ],
+                    },
+                    {
+                        "group_order_id": 1,
+                        "orders": [
+                            {
+                                "order_id": 3,
+                                "weight": 0.8,
+                                "regions": 1,
+                                "delivery_hours": [
+                                    "10:00-11:00",
+                                    "13:00-14:00",
+                                ],
+                                "cost": 100.0,
+                                "completed_time": None,
+                            }
+                        ],
+                    },
+                ],
+            }
+        ],
+    }
+
+
+async def test_get_couriers_assignments_with_params(
+    make_get_request,
+    setup_database,
+    create_couriers,
+    create_orders,
+    assign_orders,
+):
+    await setup_database
+    await create_couriers
+    await create_orders
+    await assign_orders
+    test_date = datetime.now().strftime("%Y-%m-%d")
+    response = await make_get_request(
+        f"/couriers/assignments?date={test_date}&courier_id=1"
+    )
+    assert response.status == 200
+    assert response.body == {
+        "date": test_date,
+        "couriers": [
+            {
+                "courier_id": 1,
+                "orders": [
+                    {
+                        "group_order_id": 0,
+                        "orders": [
+                            {
+                                "order_id": 1,
+                                "weight": 1.5,
+                                "regions": 1,
+                                "delivery_hours": ["09:00-12:00"],
+                                "cost": 150.0,
+                                "completed_time": None,
+                            }
+                        ],
+                    },
+                    {
+                        "group_order_id": 1,
+                        "orders": [
+                            {
+                                "order_id": 3,
+                                "weight": 0.8,
+                                "regions": 1,
+                                "delivery_hours": [
+                                    "10:00-11:00",
+                                    "13:00-14:00",
+                                ],
+                                "cost": 100.0,
+                                "completed_time": None,
+                            }
+                        ],
+                    },
+                ],
+            }
+        ],
+    }
+
+
+async def test_get_couriers_assignments_non_existing_courier(
+    make_get_request,
+    setup_database,
+    create_couriers,
+    create_orders,
+    assign_orders,
+):
+    await setup_database
+    await create_couriers
+    await create_orders
+    await assign_orders
+    test_date = datetime.now().strftime("%Y-%m-%d")
+    response = await make_get_request(
+        f"/couriers/assignments?date={test_date}&courier_id=9999"
+    )
+    assert response.status == 404
+
+
+@pytest.mark.parametrize(
+    "courier_id, date, expected_status",
+    [
+        ("e", datetime.now().strftime("%Y-%m-%d"), 400),
+        (1, "e", 400),
+    ],
+)
+async def test_get_couriers_assignments_invalid_data(
+    make_get_request,
+    setup_database,
+    create_couriers,
+    create_orders,
+    assign_orders,
+    courier_id,
+    date,
+    expected_status,
+):
+    await setup_database
+    await create_couriers
+    await create_orders
+    await assign_orders
+    response = await make_get_request(
+        f"/couriers/assignments?date={date}&courier_id={courier_id}"
+    )
+    assert response.status == expected_status
