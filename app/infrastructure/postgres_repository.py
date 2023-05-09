@@ -237,10 +237,10 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
                     for order in orders
                 ]
 
-    async def save_schedule(self, courier_time_slots: dict, date: datetime):
+    async def save_schedule(self, time_slots: dict, date: datetime):
         async with AsyncSession(engine) as session:
             async with session.begin():
-                for courier, value in courier_time_slots.items():
+                for courier, value in time_slots.items():
                     for schedule_record in value:
                         for group_order_id, order in enumerate(
                             schedule_record[1]

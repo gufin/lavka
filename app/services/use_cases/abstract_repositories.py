@@ -57,7 +57,7 @@ class LavkaAbstractRepository(ABC):
         pass
 
     @abstractmethod
-    async def save_schedule(self, courier_time_slots: dict, date: datetime):
+    async def save_schedule(self, time_slots: dict, date: datetime):
         pass
 
     @abstractmethod

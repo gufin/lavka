@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Any, Optional
 
-from core.constants import courier_type_settings
+from core.constants import courier_settings
 from models import (
     CompleteOrderList,
     OrderModel,
@@ -31,84 +31,85 @@ class OrderService:
         )
 
     async def assign_orders(self, date: datetime):
-        count_of_schedule = await self.repository.get_count_of_schedule(
-            date=date
-        )
-        if count_of_schedule > 0:
+        if await self.repository.get_count_of_schedule(date=date) > 0:
             return None
 
         couriers_response = await self.repository.get_couriers(
             offset=0, limit=1000
         )
+        couriers = couriers_response.couriers
+        if not couriers:
+            return None
+
         orders_to_assign = await self.repository.get_orders_to_assign(
             date=date
         )
+        if not orders_to_assign:
+            return None
 
         sorted_orders = sorted(
-            orders_to_assign, key=lambda order: order.weight, reverse=True
+            orders_to_assign,
+            key=lambda current_order: current_order.weight,
+            reverse=True,
         )
 
-        (
-            courier_time_slots,
-            courier_available_slots,
-        ) = self.get_courier_time_slots(
-            couriers_response=couriers_response,
-            courier_type_settings=courier_type_settings,
+        time_slots, available_slots = self.get_time_slots(
+            couriers=couriers,
+            current_courier_settings=courier_settings,
             date=date,
         )
+
         for order in sorted_orders:
-            for courier in couriers_response.couriers:
-                settings = courier_type_settings[courier.courier_type]
+            for courier in couriers:
+                settings = courier_settings[courier.courier_type]
 
                 if (
-                    order.regions in courier.regions[: settings["max_regions"]]
-                    and order.weight <= settings["max_weight"]
-                    and courier_available_slots[courier.id] > 0
+                    order.regions
+                    not in courier.regions[: settings["max_regions"]]
+                    or order.weight > settings["max_weight"]
+                    or available_slots[courier.id] <= 0
                 ):
-                    timeslot_id = self.get_timeslot_id(
-                        order_delivery_hours=order.delivery_hours,
-                        courier_time_slots=courier_time_slots[courier.id],
-                        max_orders=settings["max_orders"],
-                        weight=order.weight,
-                        max_weight=settings["max_weight"],
-                    )
-                    if timeslot_id is not None:
-                        courier_time_slots[courier.id][timeslot_id][1].append(
-                            order.id
-                        )
-                        courier_time_slots[courier.id][timeslot_id][
-                            2
-                        ] += order.weight
-                        if (
-                            len(courier_time_slots[courier.id][timeslot_id][1])
-                            == 1
-                        ):
-                            courier_time_slots[courier.id][timeslot_id][
-                                3
-                            ] += order.cost
-                        else:
-                            courier_time_slots[courier.id][timeslot_id][3] += (
-                                order.cost * settings["delivery_cost"][1]
-                            )
-                        courier_available_slots[courier.id] -= 1
-                        break
+                    continue
+
+                timeslot_id = self.get_timeslot_id(
+                    order_delivery_hours=order.delivery_hours,
+                    time_slots=time_slots[courier.id],
+                    max_orders=settings["max_orders"],
+                    weight=order.weight,
+                    max_weight=settings["max_weight"],
+                )
+
+                if timeslot_id is None:
+                    continue
+
+                time_slot = time_slots[courier.id][timeslot_id]
+                time_slot[1].append(order.id)
+                time_slot[2] += order.weight
+
+                time_slot[3] += (
+                    order.cost
+                    if len(time_slot[1]) == 1
+                    else order.cost * settings["next_delivery_cost"]
+                )
+                available_slots[courier.id] -= 1
+                break
 
         return await self.repository.save_schedule(
-            courier_time_slots=courier_time_slots, date=date
+            time_slots=time_slots, date=date
         )
 
-    def get_courier_time_slots(
-        self, couriers_response, courier_type_settings, date
-    ):
-        courier_time_slots = {}
-        courier_available_slots = {}
-        for courier in couriers_response.couriers:
-            courier_time_slots[courier.id] = []
-            courier_available_slots[courier.id] = 0
-            settings = courier_type_settings[courier.courier_type]
-            max_time_slot_time = settings["order_time"][0] + settings[
-                "order_time"
-            ][1] * (settings["max_orders"] - 1)
+    def get_time_slots(
+        self, couriers, current_courier_settings, date
+    ) -> tuple[dict[Any, list[Any]], dict[Any, int]]:
+        time_slots = {}
+        available_slots = {}
+        for courier in couriers:
+            time_slots[courier.id] = []
+            available_slots[courier.id] = 0
+            settings = current_courier_settings[courier.courier_type]
+            max_time_slot_time = settings["first_order_time"] + settings[
+                "next_order_time"
+            ] * (settings["max_orders"] - 1)
             for time_interval in courier.working_hours:
                 duration_minutes = (
                     self.get_duration_minutes(time_interval)
@@ -118,18 +119,16 @@ class OrderService:
                     time_interval=time_interval, date=date
                 )
                 while duration_minutes >= max_time_slot_time:
-                    courier_time_slots[courier.id].append(
-                        ([start_date, [], 0, 0])
-                    )
+                    time_slots[courier.id].append(([start_date, [], 0, 0]))
                     start_date += timedelta(minutes=max_time_slot_time)
-                    courier_available_slots[courier.id] += 1
+                    available_slots[courier.id] += 1
                     duration_minutes -= max_time_slot_time
-        return courier_time_slots, courier_available_slots
+        return time_slots, available_slots
 
     def get_timeslot_id(
         self,
         order_delivery_hours: list,
-        courier_time_slots: list,
+        time_slots: list,
         max_orders: int,
         weight: float,
         max_weight: float,
@@ -137,7 +136,7 @@ class OrderService:
         return next(
             (
                 pos
-                for pos, time_slot in enumerate(courier_time_slots)
+                for pos, time_slot in enumerate(time_slots)
                 if len(time_slot[1]) < max_orders
                 and time_slot[2] + weight <= max_weight
                 and self.is_time_in_intervals(
@@ -161,37 +160,6 @@ class OrderService:
     def time_to_minutes(time_str):
         hours, minutes = map(int, time_str.split(":"))
         return hours * 60 + minutes
-
-    def check_overlap_exist(
-        self, courier_working_hours: list, order_delivery_hours: list
-    ) -> bool:
-        def intervals_overlap(start1, end1, start2, end2):
-            return start1 < end2 and start2 < end1
-
-        overlap_found = False
-
-        for courier_interval in courier_working_hours:
-            courier_start, courier_end = courier_interval.split("-")
-            courier_start_minutes = self.time_to_minutes(courier_start)
-            courier_end_minutes = self.time_to_minutes(courier_end)
-
-            for order_interval in order_delivery_hours:
-                order_start, order_end = order_interval.split("-")
-                order_start_minutes = self.time_to_minutes(order_start)
-                order_end_minutes = self.time_to_minutes(order_end)
-
-                if intervals_overlap(
-                    courier_start_minutes,
-                    courier_end_minutes,
-                    order_start_minutes,
-                    order_end_minutes,
-                ):
-                    overlap_found = True
-                    break
-
-            if overlap_found:
-                break
-        return overlap_found
 
     @staticmethod
     def get_start_date(time_interval: str, date: datetime) -> datetime:
