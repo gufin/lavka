@@ -1,11 +1,11 @@
 from datetime import datetime
 
+from core.constants import rating_coefficients, salary_coefficients
 from models import (
     CourierMetaInfo,
     CourierModel,
     CouriersList,
     CouriersListResponse,
-    CourierType,
 )
 from services.use_cases.abstract_repositories import LavkaAbstractRepository
 
@@ -13,17 +13,6 @@ from services.use_cases.abstract_repositories import LavkaAbstractRepository
 class CourierService:
     def __init__(self, repository: LavkaAbstractRepository):
         self.repository = repository
-        self.salary_coefficients = {
-            CourierType.AUTO: 4,
-            CourierType.BIKE: 3,
-            CourierType.FOOT: 2,
-        }
-
-        self.rating_coefficients = {
-            CourierType.AUTO: 1,
-            CourierType.BIKE: 2,
-            CourierType.FOOT: 3,
-        }
 
     async def create_couriers(
         self, *, couriers_model: CouriersList
@@ -55,7 +44,7 @@ class CourierService:
             earnings = None
         else:
             earnings = (
-                sum_of_orders * self.salary_coefficients[courier.courier_type]
+                sum_of_orders * salary_coefficients[courier.courier_type]
             )
 
             working_hours = self.get_working_hours(
@@ -64,7 +53,7 @@ class CourierService:
             rating = (
                 completed_orders
                 / working_hours
-                * self.rating_coefficients[courier.courier_type]
+                * rating_coefficients[courier.courier_type]
             )
 
         return CourierMetaInfo(

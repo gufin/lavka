@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta
 from typing import Optional
 
+from core.constants import courier_type_settings
 from models import (
     CompleteOrderList,
-    CourierType,
     OrderModel,
     OrdersList,
 )
@@ -34,75 +34,68 @@ class OrderService:
         count_of_schedule = await self.repository.get_count_of_schedule(
             date=date
         )
-        if count_of_schedule == 0:
-            couriers_response = await self.repository.get_couriers(
-                offset=0, limit=1000
-            )
-            orders_to_assign = await self.repository.get_orders_to_assign(
-                date=date
-            )
-            courier_type_settings = self.get_courier_type_settings()
+        if count_of_schedule > 0:
+            return None
 
-            sorted_orders = sorted(
-                orders_to_assign, key=lambda order: order.weight, reverse=True
-            )
+        couriers_response = await self.repository.get_couriers(
+            offset=0, limit=1000
+        )
+        orders_to_assign = await self.repository.get_orders_to_assign(
+            date=date
+        )
 
-            (
-                courier_time_slots,
-                courier_available_slots,
-            ) = self.get_courier_time_slots(
-                couriers_response=couriers_response,
-                courier_type_settings=courier_type_settings,
-                date=date,
-            )
-            for order in sorted_orders:
-                for courier in couriers_response.couriers:
-                    settings = courier_type_settings[courier.courier_type]
+        sorted_orders = sorted(
+            orders_to_assign, key=lambda order: order.weight, reverse=True
+        )
 
-                    if (
-                        order.regions
-                        in courier.regions[: settings["max_regions"]]
-                        and order.weight <= settings["max_weight"]
-                        and courier_available_slots[courier.id] > 0
-                    ):
-                        timeslot_id = self.get_timeslot_id(
-                            order_delivery_hours=order.delivery_hours,
-                            courier_time_slots=courier_time_slots[courier.id],
-                            max_orders=settings["max_orders"],
-                            weight=order.weight,
-                            max_weight=settings["max_weight"],
+        (
+            courier_time_slots,
+            courier_available_slots,
+        ) = self.get_courier_time_slots(
+            couriers_response=couriers_response,
+            courier_type_settings=courier_type_settings,
+            date=date,
+        )
+        for order in sorted_orders:
+            for courier in couriers_response.couriers:
+                settings = courier_type_settings[courier.courier_type]
+
+                if (
+                    order.regions in courier.regions[: settings["max_regions"]]
+                    and order.weight <= settings["max_weight"]
+                    and courier_available_slots[courier.id] > 0
+                ):
+                    timeslot_id = self.get_timeslot_id(
+                        order_delivery_hours=order.delivery_hours,
+                        courier_time_slots=courier_time_slots[courier.id],
+                        max_orders=settings["max_orders"],
+                        weight=order.weight,
+                        max_weight=settings["max_weight"],
+                    )
+                    if timeslot_id is not None:
+                        courier_time_slots[courier.id][timeslot_id][1].append(
+                            order.id
                         )
-                        if timeslot_id is not None:
+                        courier_time_slots[courier.id][timeslot_id][
+                            2
+                        ] += order.weight
+                        if (
+                            len(courier_time_slots[courier.id][timeslot_id][1])
+                            == 1
+                        ):
                             courier_time_slots[courier.id][timeslot_id][
-                                1
-                            ].append(order.id)
-                            courier_time_slots[courier.id][timeslot_id][
-                                2
-                            ] += order.weight
-                            if (
-                                len(
-                                    courier_time_slots[courier.id][
-                                        timeslot_id
-                                    ][1]
-                                )
-                                == 1
-                            ):
-                                courier_time_slots[courier.id][timeslot_id][
-                                    3
-                                ] += order.cost
-                            else:
-                                courier_time_slots[courier.id][timeslot_id][
-                                    3
-                                ] += (
-                                    order.cost * settings["delivery_cost"][1]
-                                )
-                            courier_available_slots[courier.id] -= 1
-                            break
+                                3
+                            ] += order.cost
+                        else:
+                            courier_time_slots[courier.id][timeslot_id][3] += (
+                                order.cost * settings["delivery_cost"][1]
+                            )
+                        courier_available_slots[courier.id] -= 1
+                        break
 
-            return await self.repository.save_schedule(
-                courier_time_slots=courier_time_slots, date=date
-            )
-        return None
+        return await self.repository.save_schedule(
+            courier_time_slots=courier_time_slots, date=date
+        )
 
     def get_courier_time_slots(
         self, couriers_response, courier_type_settings, date
@@ -201,7 +194,7 @@ class OrderService:
         return overlap_found
 
     @staticmethod
-    def get_start_date(time_interval: str, date: datetime) -> int:
+    def get_start_date(time_interval: str, date: datetime) -> datetime:
         start_time_str, end_time_str = time_interval.split("-")
         start_hours, start_minutes = map(int, start_time_str.split(":"))
         start_time_delta = timedelta(hours=start_hours, minutes=start_minutes)
@@ -216,29 +209,3 @@ class OrderService:
         start_minutes_total = start_hours * 60 + start_minutes
         end_minutes_total = end_hours * 60 + end_minutes
         return end_minutes_total - start_minutes_total
-
-    @staticmethod
-    def get_courier_type_settings() -> dict:
-        return {
-            CourierType.FOOT: {
-                "max_weight": 10,
-                "max_orders": 2,
-                "max_regions": 1,
-                "order_time": [25, 10],
-                "delivery_cost": [1.0, 0.8],
-            },
-            CourierType.BIKE: {
-                "max_weight": 20,
-                "max_orders": 4,
-                "max_regions": 2,
-                "order_time": [12, 8],
-                "delivery_cost": [1.0, 0.8],
-            },
-            CourierType.AUTO: {
-                "max_weight": 40,
-                "max_orders": 7,
-                "max_regions": 3,
-                "order_time": [8, 4],
-                "delivery_cost": [1.0, 0.8],
-            },
-        }
