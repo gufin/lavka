@@ -419,7 +419,7 @@ async def test_get_couriers_assignments(
             }
         ],
     }
-
+    await asyncio.sleep(1)
 
 async def test_get_couriers_assignments_with_params(
     make_get_request,
@@ -476,7 +476,7 @@ async def test_get_couriers_assignments_with_params(
             }
         ],
     }
-
+    await asyncio.sleep(1)
 
 async def test_get_couriers_assignments_non_existing_courier(
     make_get_request,
@@ -494,7 +494,7 @@ async def test_get_couriers_assignments_non_existing_courier(
         f"/couriers/assignments?date={test_date}&courier_id=9999"
     )
     assert response.status == 404
-
+    await asyncio.sleep(1)
 
 @pytest.mark.parametrize(
     "courier_id, date, expected_status",
@@ -521,3 +521,4 @@ async def test_get_couriers_assignments_invalid_data(
         f"/couriers/assignments?date={date}&courier_id={courier_id}"
     )
     assert response.status == expected_status
+    await asyncio.sleep(1)
