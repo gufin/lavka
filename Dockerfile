@@ -12,7 +12,10 @@ WORKDIR /app
 
 COPY --from=builder /app /app
 COPY app /app
+COPY app/start.sh /start.sh
+RUN chmod +x start.sh
 
 EXPOSE 8000
 
+ENTRYPOINT ["/start.sh"]
 CMD /app/bin/uvicorn main:app --host=0.0.0.0 --port=8080

@@ -14,7 +14,7 @@ service_api_url = "http://127.0.0.1:8080"  # TODO заменить на наст
 
 @pytest.fixture(autouse=True)
 async def setup_database():
-    DATABASE_URL = "postgresql+asyncpg://postgres:example@127.0.0.1/postgres"
+    DATABASE_URL = "postgresql+asyncpg://postgres:password@127.0.0.1/postgres"
     # TODO заменить на настройки
     engine = create_async_engine(DATABASE_URL)
     async_session = sessionmaker(
