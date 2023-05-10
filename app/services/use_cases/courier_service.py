@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from core.constants import rating_coefficients, salary_coefficients
+from core.constants import RATING_COEFFICIENTS, SALARY_COEFFICIENTS
 from models import (
     CourierMetaInfo,
     CourierModel,
@@ -44,7 +44,7 @@ class CourierService:
             earnings = None
         else:
             earnings = (
-                sum_of_orders * salary_coefficients[courier.courier_type]
+                sum_of_orders * SALARY_COEFFICIENTS[courier.courier_type]
             )
 
             working_hours = self.get_working_hours(
@@ -53,7 +53,7 @@ class CourierService:
             rating = (
                 completed_orders
                 / working_hours
-                * rating_coefficients[courier.courier_type]
+                * RATING_COEFFICIENTS[courier.courier_type]
             )
 
         return CourierMetaInfo(

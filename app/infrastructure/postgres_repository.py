@@ -168,7 +168,7 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
                         if current_courier is not None:
                             order.completed_time = info.complete_time.replace(
                                 tzinfo=None
-                            )  # TODO разобраться с таймзонами
+                            )
                             order.courier_id = info.courier_id
                     elif (
                         order.courier_id != info.courier_id

@@ -1,18 +1,18 @@
 from models import CourierType
 
-salary_coefficients = {
+SALARY_COEFFICIENTS = {
     CourierType.AUTO: 4,
     CourierType.BIKE: 3,
     CourierType.FOOT: 2,
 }
 
-rating_coefficients = {
+RATING_COEFFICIENTS = {
     CourierType.AUTO: 1,
     CourierType.BIKE: 2,
     CourierType.FOOT: 3,
 }
 
-courier_settings = {
+COURIER_SETTINGS = {
     CourierType.FOOT: {
         "max_weight": 10,
         "max_orders": 2,

@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime
 
 import pytest
@@ -54,14 +53,9 @@ async def test_post_courier_valid(make_post_request, setup_database):
             },
         ]
     }
-    await asyncio.sleep(1)
 
 
-async def test_post_courier_invalid(
-    make_post_request, setup_database, create_couriers
-):
-    await setup_database
-    await create_couriers
+async def test_post_courier_invalid(make_post_request):
     response = await make_post_request(
         "/couriers",
         params={
@@ -75,7 +69,6 @@ async def test_post_courier_invalid(
         },
     )
     assert response.status == 400
-    await asyncio.sleep(1)
 
 
 async def test_get_existing_courier(
@@ -91,7 +84,6 @@ async def test_get_existing_courier(
         "regions": [1, 2, 9],
         "working_hours": ["10:00-14:00", "16:00-20:00"],
     }
-    await asyncio.sleep(1)
 
 
 async def test_get_non_existing_courier(
@@ -101,7 +93,6 @@ async def test_get_non_existing_courier(
     await create_couriers
     response = await make_get_request("/couriers/999")
     assert response.status == 404
-    await asyncio.sleep(1)
 
 
 async def test_get_invalid_courier(
@@ -111,7 +102,6 @@ async def test_get_invalid_courier(
     await create_couriers
     response = await make_get_request("/couriers/e")
     assert response.status == 400
-    await asyncio.sleep(1)
 
 
 async def test_get_couriers(make_get_request, setup_database, create_couriers):
@@ -131,7 +121,6 @@ async def test_get_couriers(make_get_request, setup_database, create_couriers):
         "limit": 1,
         "offset": 0,
     }
-    await asyncio.sleep(1)
 
 
 async def test_get_couriers_limit(
@@ -159,7 +148,6 @@ async def test_get_couriers_limit(
         "limit": 2,
         "offset": 0,
     }
-    await asyncio.sleep(1)
 
 
 async def test_get_couriers_offset(
@@ -181,7 +169,6 @@ async def test_get_couriers_offset(
         "limit": 1,
         "offset": 1,
     }
-    await asyncio.sleep(1)
 
 
 async def test_get_couriers_limit_offset(
@@ -203,7 +190,6 @@ async def test_get_couriers_limit_offset(
         "limit": 1,
         "offset": 1,
     }
-    await asyncio.sleep(1)
 
 
 @pytest.mark.parametrize("limit", ["e", "-1"])
@@ -214,7 +200,6 @@ async def test_get_couriers_invalid_limit(
     await create_couriers
     response = await make_get_request(f"/couriers?limit={limit}")
     assert response.status == 400
-    await asyncio.sleep(1)
 
 
 @pytest.mark.parametrize("offset", ["e", "-1"])
@@ -225,7 +210,6 @@ async def test_get_couriers_invalid_offset(
     await create_couriers
     response = await make_get_request(f"/couriers?offset={offset}")
     assert response.status == 400
-    await asyncio.sleep(1)
 
 
 @pytest.mark.parametrize(
@@ -246,7 +230,6 @@ async def test_get_couriers_invalid_limit_offset(
         f"/couriers?limit={limit}&offset={offset}"
     )
     assert response.status == 400
-    await asyncio.sleep(1)
 
 
 async def test_get_couriers_limit_offset_out_of_range(
@@ -257,7 +240,6 @@ async def test_get_couriers_limit_offset_out_of_range(
     response = await make_get_request("/couriers?limit=1&offset=100")
     assert response.status == 200
     assert response.body == {"couriers": [], "limit": 1, "offset": 100}
-    await asyncio.sleep(1)
 
 
 async def test_get_courier_meta_info(
@@ -283,7 +265,6 @@ async def test_get_courier_meta_info(
         "earnings": 300,
         "rating": approx(0.3),
     }
-    await asyncio.sleep(1)
 
 
 async def test_get_courier_meta_info_different_period(
@@ -309,7 +290,6 @@ async def test_get_courier_meta_info_different_period(
         "earnings": None,
         "rating": None,
     }
-    await asyncio.sleep(1)
 
 
 @pytest.mark.parametrize(
@@ -334,7 +314,6 @@ async def test_get_courier_meta_info_missing_params(
     await complete_orders
     response = await make_get_request(f"/couriers/meta-info/1{query_params}")
     assert response.status == 422
-    await asyncio.sleep(1)
 
 
 @pytest.mark.parametrize(
@@ -364,7 +343,6 @@ async def test_get_courier_meta_info_invalid_params(
         f"{path}?start_date={start_date}&end_date={end_date}"
     )
     assert response.status == 400
-    await asyncio.sleep(1)
 
 
 async def test_get_couriers_assignments(
@@ -419,7 +397,7 @@ async def test_get_couriers_assignments(
             }
         ],
     }
-    await asyncio.sleep(1)
+
 
 async def test_get_couriers_assignments_with_params(
     make_get_request,
@@ -476,7 +454,7 @@ async def test_get_couriers_assignments_with_params(
             }
         ],
     }
-    await asyncio.sleep(1)
+
 
 async def test_get_couriers_assignments_non_existing_courier(
     make_get_request,
@@ -494,7 +472,7 @@ async def test_get_couriers_assignments_non_existing_courier(
         f"/couriers/assignments?date={test_date}&courier_id=9999"
     )
     assert response.status == 404
-    await asyncio.sleep(1)
+
 
 @pytest.mark.parametrize(
     "courier_id, date, expected_status",
@@ -521,4 +499,3 @@ async def test_get_couriers_assignments_invalid_data(
         f"/couriers/assignments?date={date}&courier_id={courier_id}"
     )
     assert response.status == expected_status
-    await asyncio.sleep(1)

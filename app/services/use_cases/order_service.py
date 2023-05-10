@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
-from core.constants import courier_settings
+from core.constants import COURIER_SETTINGS
 from models import (
     CompleteOrderList,
     OrderModel,
@@ -55,13 +55,13 @@ class OrderService:
 
         time_slots, available_slots = self.get_time_slots(
             couriers=couriers,
-            current_courier_settings=courier_settings,
+            current_courier_settings=COURIER_SETTINGS,
             date=date,
         )
 
         for order in sorted_orders:
             for courier in couriers:
-                settings = courier_settings[courier.courier_type]
+                settings = COURIER_SETTINGS[courier.courier_type]
 
                 if (
                     order.regions

@@ -1,13 +1,13 @@
 from sqlalchemy import (
+    ARRAY,
     Column,
+    DateTime,
+    Enum,
     Float,
     ForeignKey,
     func,
     Integer,
     String,
-    Enum,
-    ARRAY,
-    DateTime,
 )
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.ext.declarative import declarative_base

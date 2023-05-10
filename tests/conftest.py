@@ -1,37 +1,23 @@
-# TODO исправить flake8
 import asyncio
+import os
 from dataclasses import dataclass
 
 import aiohttp
 import pytest
+from dotenv import load_dotenv
 from multidict import CIMultiDictProxy
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-service_api_url = "http://127.0.0.1:8080"  # TODO заменить на настройки
+load_dotenv()
 
-
-@pytest.fixture(autouse=True)
-async def setup_database():
-    DATABASE_URL = "postgresql+asyncpg://postgres:password@127.0.0.1/postgres"
-    # TODO заменить на настройки
-    engine = create_async_engine(DATABASE_URL)
-    async_session = sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
-
-    async with async_session() as session:
-        async with session.begin():
-            await session.execute(text("TRUNCATE TABLE couriers CASCADE;"))
-            await session.execute(
-                text("ALTER SEQUENCE couriers_id_seq RESTART WITH 1;")
-            )
-            await session.execute(text("TRUNCATE TABLE orders CASCADE;"))
-            await session.execute(
-                text("ALTER SEQUENCE orders_id_seq RESTART WITH 1;")
-            )
-            await session.commit()
+service_api_url = os.getenv("SERVICE_API_URL", "http://app:8080")
+db_host = os.getenv("DB_HOST", "db")
+db_port = os.getenv("DB_PORT", 5432)
+user = os.getenv("POSTGRES_USER", "postgres")
+password = os.getenv("POSTGRES_PASSWORD", "password")
+db = os.getenv("POSTGRES_DB", "postgres")
 
 
 @pytest.fixture(autouse=True)
@@ -58,6 +44,32 @@ async def create_couriers(make_post_request):
             ]
         },
     )
+
+
+@pytest.fixture(autouse=True)
+async def setup_database():
+    DATABASE_URL = (
+        f"postgresql+asyncpg://{user}:{password}@{db_host}:{db_port}/{db}"
+    )
+    engine = create_async_engine(DATABASE_URL)
+    async_session = sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
+
+    async with async_session() as session:
+        async with session.begin():
+            await session.execute(text("TRUNCATE TABLE couriers CASCADE;"))
+            await session.execute(
+                text("ALTER SEQUENCE couriers_id_seq RESTART WITH 1;")
+            )
+            await session.execute(text("TRUNCATE TABLE orders CASCADE;"))
+            await session.execute(
+                text("ALTER SEQUENCE orders_id_seq RESTART WITH 1;")
+            )
+            await session.execute(
+                text("TRUNCATE TABLE orders_delivery_schedule")
+            )
+            await session.commit()
 
 
 @pytest.fixture(autouse=True)
@@ -89,7 +101,7 @@ async def create_orders(make_post_request):
     )
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 async def complete_orders(make_post_request):
     await make_post_request(
         "/orders/complete",
@@ -105,7 +117,7 @@ async def complete_orders(make_post_request):
     )
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 async def assign_orders(make_post_request):
     await make_post_request("/orders/assign")
 
@@ -137,8 +149,13 @@ def event_loop():
 def make_get_request(session):
     async def inner(endpoint: str, params: dict | None = None) -> HTTPResponse:
         params = params or {}
+        headers = {
+            "Content-Type": "application/json",
+            "User-Agent": "my-app/0.0.1",
+            "Test": "1",
+        }
         url = f"{service_api_url}{endpoint}"
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(headers=headers) as session:
             async with session.get(url, json=params) as response:
                 return HTTPResponse(
                     body=await response.json(),
@@ -153,8 +170,13 @@ def make_get_request(session):
 def make_post_request(session):
     async def inner(endpoint: str, params: dict | None = None) -> HTTPResponse:
         params = params or {}
+        headers = {
+            "Content-Type": "application/json",
+            "User-Agent": "my-app/0.0.1",
+            "Test": "1",
+        }
         url = f"{service_api_url}{endpoint}"
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(headers=headers) as session:
             async with session.post(url, json=params) as response:
                 return HTTPResponse(
                     body=await response.json(),
