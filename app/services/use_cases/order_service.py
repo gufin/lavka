@@ -34,10 +34,8 @@ class OrderService:
         if await self.repository.get_count_of_schedule(date=date) > 0:
             return None
 
-        couriers_response = await self.repository.get_couriers(
-            offset=0, limit=1000
-        )
-        couriers = couriers_response.couriers
+        couriers = await self.repository.get_all_couriers()
+
         if not couriers:
             return None
 

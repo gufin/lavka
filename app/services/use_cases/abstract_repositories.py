@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
+from typing import Optional
 
 from models import (
     CompleteOrderList,
@@ -19,13 +20,18 @@ class LavkaAbstractRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_courier(self, *, courier_id: int) -> CourierModel:
+    async def get_courier(self, *, courier_id: int) -> Optional[CourierModel]:
         pass
 
     @abstractmethod
     async def get_couriers(
         self, offset: int, limit: int
     ) -> CouriersListResponse:
+        pass
+
+    @staticmethod
+    @abstractmethod
+    async def get_all_couriers() -> list[CourierModel]:
         pass
 
     @abstractmethod
