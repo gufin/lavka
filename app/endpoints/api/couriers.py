@@ -17,11 +17,11 @@ router = APIRouter()
 @router.get("/couriers/assignments", dependencies=[Depends(rate_limiter)])
 @inject
 async def get_couriers_assignments(
-        courier_id=-1,
-        date=None,
-        courier_service: CourierService = Depends(
-            Provide[Container.courier_service]
-        ),
+    courier_id=-1,
+    date=None,
+    courier_service: CourierService = Depends(
+        Provide[Container.courier_service]
+    ),
 ):
     if date is None:
         date = datetime.combine(datetime.now(), datetime.min.time())
@@ -34,7 +34,7 @@ async def get_couriers_assignments(
     except ValueError:
         return JSONResponse(
             content={"detail": "Invalid data provided."},
-            status_code=HTTPStatus.BAD_REQUEST
+            status_code=HTTPStatus.BAD_REQUEST,
         )
 
     result = await courier_service.get_couriers_assignments(
@@ -43,7 +43,7 @@ async def get_couriers_assignments(
     return (
         JSONResponse(
             content={"detail": "Assignments not found."},
-            status_code=HTTPStatus.NOT_FOUND
+            status_code=HTTPStatus.NOT_FOUND,
         )
         if result is None
         else result
@@ -53,10 +53,10 @@ async def get_couriers_assignments(
 @router.post("/couriers", dependencies=[Depends(rate_limiter)])
 @inject
 async def create_couriers(
-        request: Request,
-        courier_service: CourierService = Depends(
-            Provide[Container.courier_service]
-        ),
+    request: Request,
+    courier_service: CourierService = Depends(
+        Provide[Container.courier_service]
+    ),
 ):
     body = await request.json()
     try:
@@ -67,29 +67,31 @@ async def create_couriers(
     except ValidationError:
         return JSONResponse(
             content={"detail": "Invalid data provided."},
-            status_code=HTTPStatus.BAD_REQUEST
+            status_code=HTTPStatus.BAD_REQUEST,
         )
 
 
 @router.get("/couriers/{courier_id}", dependencies=[Depends(rate_limiter)])
 @inject
 async def get_courier(
-        courier_id,
-        courier_service: CourierService = Depends(
-            Provide[Container.courier_service]
-        ),
+    courier_id,
+    courier_service: CourierService = Depends(
+        Provide[Container.courier_service]
+    ),
 ):
     try:
         correct_courier_id = int(courier_id)
     except ValueError:
         return JSONResponse(
             content={"detail": "Invalid data provided."},
-            status_code=HTTPStatus.BAD_REQUEST
+            status_code=HTTPStatus.BAD_REQUEST,
         )
     result = await courier_service.get_courier(courier_id=correct_courier_id)
     return (
-        JSONResponse(content={"detail": "Courier not found."},
-                     status_code=HTTPStatus.NOT_FOUND)
+        JSONResponse(
+            content={"detail": "Courier not found."},
+            status_code=HTTPStatus.NOT_FOUND,
+        )
         if result is None
         else result
     )
@@ -98,11 +100,11 @@ async def get_courier(
 @router.get("/couriers", dependencies=[Depends(rate_limiter)])
 @inject
 async def get_couriers(
-        offset=0,
-        limit=1,
-        courier_service: CourierService = Depends(
-            Provide[Container.courier_service]
-        ),
+    offset=0,
+    limit=1,
+    courier_service: CourierService = Depends(
+        Provide[Container.courier_service]
+    ),
 ):
     try:
         correct_offset = int(offset)
@@ -110,12 +112,12 @@ async def get_couriers(
         if correct_offset < 0 or correct_limit < 0:
             return JSONResponse(
                 content={"detail": "Invalid data provided."},
-                status_code=HTTPStatus.BAD_REQUEST
+                status_code=HTTPStatus.BAD_REQUEST,
             )
     except ValueError:
         return JSONResponse(
             content={"detail": "Invalid data provided."},
-            status_code=HTTPStatus.BAD_REQUEST
+            status_code=HTTPStatus.BAD_REQUEST,
         )
     return await courier_service.get_couriers(
         offset=correct_offset, limit=correct_limit
@@ -127,12 +129,12 @@ async def get_couriers(
 )
 @inject
 async def get_courier_meta_info(
-        courier_id,
-        start_date,
-        end_date,
-        courier_service: CourierService = Depends(
-            Provide[Container.courier_service]
-        ),
+    courier_id,
+    start_date,
+    end_date,
+    courier_service: CourierService = Depends(
+        Provide[Container.courier_service]
+    ),
 ):
     try:
         correct_courier_id = int(courier_id)
@@ -141,7 +143,7 @@ async def get_courier_meta_info(
     except ValueError:
         return JSONResponse(
             content={"detail": "Invalid data provided."},
-            status_code=HTTPStatus.BAD_REQUEST
+            status_code=HTTPStatus.BAD_REQUEST,
         )
 
     result = await courier_service.get_courier_meta_info(
@@ -150,8 +152,10 @@ async def get_courier_meta_info(
         end_date=correct_end_date,
     )
     return (
-        JSONResponse(content={"detail": "Courier not found."},
-                     status_code=HTTPStatus.NOT_FOUND)
+        JSONResponse(
+            content={"detail": "Courier not found."},
+            status_code=HTTPStatus.NOT_FOUND,
+        )
         if result is None
         else result
     )

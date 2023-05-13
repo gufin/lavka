@@ -1,5 +1,5 @@
-from http import HTTPStatus
 from datetime import datetime
+from http import HTTPStatus
 
 import pytest
 from pytest import approx

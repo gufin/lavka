@@ -9,7 +9,7 @@ done
 echo "Database started"
 
 # Apply database migrations
-/app/bin/alembic upgrade head
+/app/bin/alembic -c /app/alembic.ini upgrade head
 
 # Run the main application
 exec "$@"

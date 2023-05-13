@@ -29,10 +29,12 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
     def __init__(self, *, config: dict):
         self.config = config
 
-    async def create_couriers(self, *,
-                              couriers_model: CouriersList) -> CouriersList:
-        couriers = [Courier(**courier.dict()) for courier in
-                    couriers_model.couriers]
+    async def create_couriers(
+        self, *, couriers_model: CouriersList
+    ) -> CouriersList:
+        couriers = [
+            Courier(**courier.dict()) for courier in couriers_model.couriers
+        ]
         async with AsyncSession(engine) as session:
             async with session.begin():
                 session.add_all(couriers)
@@ -66,7 +68,7 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
             )
 
     async def get_couriers(
-            self, offset: int, limit: int
+        self, offset: int, limit: int
     ) -> CouriersListResponse:
         async with AsyncSession(engine) as session:
             async with session.begin():
@@ -103,7 +105,9 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
                     for courier in couriers
                 ]
 
-    async def create_orders(self, *, orders_model: OrdersList) -> list[OrderModel]:
+    async def create_orders(
+        self, *, orders_model: OrdersList
+    ) -> list[OrderModel]:
         orders = [Order(**order.dict()) for order in orders_model.orders]
         async with AsyncSession(engine) as session:
             async with session.begin():
@@ -160,7 +164,7 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
                 ]
 
     async def complete_orders(
-            self, *, complete_orders_model: CompleteOrderList
+        self, *, complete_orders_model: CompleteOrderList
     ):
         async with AsyncSession(engine) as session:
             order_ids = [
@@ -184,9 +188,9 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
                             )
                             order.courier_id = info.courier_id
                     elif (
-                            order.courier_id != info.courier_id
-                            or order.completed_time
-                            != info.complete_time.replace(tzinfo=None)
+                        order.courier_id != info.courier_id
+                        or order.completed_time
+                        != info.complete_time.replace(tzinfo=None)
                     ):
                         return None
                 await session.commit()
@@ -208,7 +212,7 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
                 ]
 
     async def get_cost_sum_and_order_count(
-            self, courier_id: int, start_date: datetime, end_date: datetime
+        self, courier_id: int, start_date: datetime, end_date: datetime
     ):
         async with AsyncSession(engine) as session:
             async with session.begin():
@@ -344,18 +348,18 @@ class LavkaPostgresRepository(LavkaAbstractRepository):
         result_proxy.close()
         result = []
         for date, courier_schedule in itertools.groupby(
-                schedules,
-                key=lambda x: x.OrderDeliverySchedule.date.date(),
+            schedules,
+            key=lambda x: x.OrderDeliverySchedule.date.date(),
         ):
             couriers = []
             for courier_id, group_orders in itertools.groupby(
-                    courier_schedule,
-                    key=lambda x: x.OrderDeliverySchedule.courier_id,
+                courier_schedule,
+                key=lambda x: x.OrderDeliverySchedule.courier_id,
             ):
                 groups = []
                 for group_id, orders in itertools.groupby(
-                        group_orders,
-                        key=lambda x: x.OrderDeliverySchedule.group_order_id,
+                    group_orders,
+                    key=lambda x: x.OrderDeliverySchedule.group_order_id,
                 ):
                     order_models = [
                         OrderModel(

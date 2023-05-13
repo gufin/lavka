@@ -16,5 +16,5 @@ RUN chmod u+x /app/start.sh
 
 EXPOSE 8000
 
-ENTRYPOINT ["./start.sh"]
+ENTRYPOINT ["/app/start.sh"]
 CMD /app/bin/uvicorn main:app --host=0.0.0.0 --port=8080
