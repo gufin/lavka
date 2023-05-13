@@ -1,4 +1,5 @@
 import datetime
+from http import HTTPStatus
 
 from dependency_injector.wiring import inject, Provide
 from fastapi import APIRouter, Depends, Request
@@ -25,7 +26,7 @@ async def create_orders(
         return await order_service.create_orders(orders_model=orders_model)
     except ValidationError:
         return JSONResponse(
-            content={"detail": "Invalid data provided."}, status_code=400
+            content={"detail": "Invalid data provided."}, status_code=HTTPStatus.NOT_FOUND
         )
 
 
@@ -39,12 +40,12 @@ async def get_order(
         correct_order_id = int(order_id)
     except ValueError:
         return JSONResponse(
-            content={"detail": "Invalid data provided."}, status_code=400
+            content={"detail": "Invalid data provided."}, status_code=HTTPStatus.NOT_FOUND
         )
 
     result = await order_service.get_order(order_id=correct_order_id)
     return (
-        JSONResponse(content={"detail": "Order not found."}, status_code=404)
+        JSONResponse(content={"detail": "Order not found."}, status_code=HTTPStatus.NOT_FOUND)
         if result is None
         else result
     )
@@ -62,12 +63,12 @@ async def get_orders(
         correct_limit = int(limit)
     except ValueError:
         return JSONResponse(
-            content={"detail": "Invalid data provided."}, status_code=400
+            content={"detail": "Invalid data provided."}, status_code=HTTPStatus.NOT_FOUND
         )
 
     if correct_offset < 0 or correct_limit < 0:
         return JSONResponse(
-            content={"detail": "Invalid data provided."}, status_code=400
+            content={"detail": "Invalid data provided."}, status_code=HTTPStatus.NOT_FOUND
         )
     return await order_service.get_orders(offset=offset, limit=limit)
 
@@ -86,14 +87,14 @@ async def complete_orders(
         )
         return (
             JSONResponse(
-                content={"detail": "Invalid data provided."}, status_code=400
+                content={"detail": "Invalid data provided."}, status_code=HTTPStatus.NOT_FOUND
             )
             if result is None
             else result
         )
     except ValidationError:
         return JSONResponse(
-            content={"detail": "Invalid data provided."}, status_code=400
+            content={"detail": "Invalid data provided."}, status_code=HTTPStatus.NOT_FOUND
         )
 
 
@@ -113,13 +114,13 @@ async def assign_orders(
             correct_date = datetime.datetime.strptime(date, "%Y-%m-%d")
         except ValidationError:
             return JSONResponse(
-                content={"detail": "Invalid data provided."}, status_code=400
+                content={"detail": "Invalid data provided."}, status_code=HTTPStatus.NOT_FOUND
             )
 
     result = await order_service.assign_orders(date=correct_date)
     return (
         JSONResponse(
-            content={"detail": "Invalid data provided."}, status_code=400
+            content={"detail": "Invalid data provided."}, status_code=HTTPStatus.NOT_FOUND
         )
         if result is None
         else JSONResponse(content=result.dict(), status_code=201)
