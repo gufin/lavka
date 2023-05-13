@@ -1,4 +1,5 @@
 from datetime import datetime
+from http import HTTPStatus
 
 import pytest
 
@@ -32,7 +33,7 @@ async def test_post_orders_valid(make_post_request, setup_database):
             ]
         },
     )
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK
     assert response.body == [
         {
             "order_id": 1,
@@ -78,12 +79,12 @@ async def test_post_orders_valid(make_post_request, setup_database):
 )
 async def test_post_orders_invalid(params, make_post_request):
     response = await make_post_request("/orders", params=params)
-    assert response.status == 400
+    assert response.status == HTTPStatus.BAD_REQUEST
 
 
 async def test_get_existing_order(make_get_request):
     response = await make_get_request("/orders/1")
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK
     assert response.body == {
         "order_id": 1,
         "weight": 1.5,
@@ -96,7 +97,7 @@ async def test_get_existing_order(make_get_request):
 
 async def test_get_non_existing_order(make_get_request):
     response = await make_get_request("/orders/999")
-    assert response.status == 404
+    assert response.status == HTTPStatus.NOT_FOUND
 
 
 async def test_get_invalid_order(make_get_request):
@@ -106,7 +107,7 @@ async def test_get_invalid_order(make_get_request):
 
 async def test_get_orders(make_get_request):
     response = await make_get_request("/orders")
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK
     assert response.body == [
         {
             "order_id": 1,
@@ -121,7 +122,7 @@ async def test_get_orders(make_get_request):
 
 async def test_get_orders_limit(make_get_request):
     response = await make_get_request("/orders?limit=2")
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK
     assert response.body == [
         {
             "order_id": 1,
@@ -144,7 +145,7 @@ async def test_get_orders_limit(make_get_request):
 
 async def test_get_orders_offset(make_get_request):
     response = await make_get_request("/orders?offset=1")
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK
     assert response.body == [
         {
             "order_id": 2,
@@ -159,7 +160,7 @@ async def test_get_orders_offset(make_get_request):
 
 async def test_get_orders_limit_offset(make_get_request):
     response = await make_get_request("/orders?limit=1&offset=1")
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK
     assert response.body == [
         {
             "order_id": 2,
@@ -202,7 +203,7 @@ async def test_get_orders_invalid_limit_offset(
 
 async def test_get_orders_limit_offset_out_of_range(make_get_request):
     response = await make_get_request("/orders?limit=1&offset=100")
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK
     assert response.body == []
 
 
@@ -220,7 +221,7 @@ async def test_complete_orders(make_post_request, create_couriers):
             ]
         },
     )
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK
     assert response.body == [
         {
             "order_id": 1,
@@ -262,7 +263,7 @@ async def test_repeat_complete_orders(make_post_request, complete_orders):
             ]
         },
     )
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK
     assert response.body == [
         {
             "order_id": 1,
@@ -312,7 +313,7 @@ async def test_assign_orders(
     await create_couriers
     await create_orders
     response = await make_post_request("/orders/assign")
-    assert response.status == 201
+    assert response.status == HTTPStatus.CREATED
     assert response.body == {
         "date": datetime.now().strftime("%Y-%m-%d"),
         "couriers": [
@@ -362,7 +363,7 @@ async def test_assign_orders_with_param(
     await create_orders
     current_date = datetime.now().strftime("%Y-%m-%d")
     response = await make_post_request(f"/orders/assign?date={current_date}")
-    assert response.status == 201
+    assert response.status == HTTPStatus.CREATED
     assert response.body == {
         "date": datetime.now().strftime("%Y-%m-%d"),
         "couriers": [

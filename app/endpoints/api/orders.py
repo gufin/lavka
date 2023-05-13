@@ -17,8 +17,9 @@ router = APIRouter()
 @router.post("/orders", dependencies=[Depends(rate_limiter)])
 @inject
 async def create_orders(
-    request: Request,
-    order_service: OrderService = Depends(Provide[Container.order_service]),
+        request: Request,
+        order_service: OrderService = Depends(
+            Provide[Container.order_service]),
 ):
     body = await request.json()
     try:
@@ -26,26 +27,30 @@ async def create_orders(
         return await order_service.create_orders(orders_model=orders_model)
     except ValidationError:
         return JSONResponse(
-            content={"detail": "Invalid data provided."}, status_code=HTTPStatus.NOT_FOUND
+            content={"detail": "Invalid data provided."},
+            status_code=HTTPStatus.BAD_REQUEST
         )
 
 
 @router.get("/orders/{order_id}", dependencies=[Depends(rate_limiter)])
 @inject
 async def get_order(
-    order_id,
-    order_service: OrderService = Depends(Provide[Container.order_service]),
+        order_id,
+        order_service: OrderService = Depends(
+            Provide[Container.order_service]),
 ):
     try:
         correct_order_id = int(order_id)
     except ValueError:
         return JSONResponse(
-            content={"detail": "Invalid data provided."}, status_code=HTTPStatus.NOT_FOUND
+            content={"detail": "Invalid data provided."},
+            status_code=HTTPStatus.BAD_REQUEST
         )
 
     result = await order_service.get_order(order_id=correct_order_id)
     return (
-        JSONResponse(content={"detail": "Order not found."}, status_code=HTTPStatus.NOT_FOUND)
+        JSONResponse(content={"detail": "Order not found."},
+                     status_code=HTTPStatus.NOT_FOUND)
         if result is None
         else result
     )
@@ -54,21 +59,24 @@ async def get_order(
 @router.get("/orders", dependencies=[Depends(rate_limiter)])
 @inject
 async def get_orders(
-    offset=0,
-    limit=1,
-    order_service: OrderService = Depends(Provide[Container.order_service]),
+        offset=0,
+        limit=1,
+        order_service: OrderService = Depends(
+            Provide[Container.order_service]),
 ):
     try:
         correct_offset = int(offset)
         correct_limit = int(limit)
     except ValueError:
         return JSONResponse(
-            content={"detail": "Invalid data provided."}, status_code=HTTPStatus.NOT_FOUND
+            content={"detail": "Invalid data provided."},
+            status_code=HTTPStatus.BAD_REQUEST
         )
 
     if correct_offset < 0 or correct_limit < 0:
         return JSONResponse(
-            content={"detail": "Invalid data provided."}, status_code=HTTPStatus.NOT_FOUND
+            content={"detail": "Invalid data provided."},
+            status_code=HTTPStatus.BAD_REQUEST
         )
     return await order_service.get_orders(offset=offset, limit=limit)
 
@@ -76,8 +84,9 @@ async def get_orders(
 @router.post("/orders/complete", dependencies=[Depends(rate_limiter)])
 @inject
 async def complete_orders(
-    request: Request,
-    order_service: OrderService = Depends(Provide[Container.order_service]),
+        request: Request,
+        order_service: OrderService = Depends(
+            Provide[Container.order_service]),
 ):
     body = await request.json()
     try:
@@ -87,22 +96,25 @@ async def complete_orders(
         )
         return (
             JSONResponse(
-                content={"detail": "Invalid data provided."}, status_code=HTTPStatus.NOT_FOUND
+                content={"detail": "Invalid data provided."},
+                status_code=HTTPStatus.BAD_REQUEST
             )
             if result is None
             else result
         )
     except ValidationError:
         return JSONResponse(
-            content={"detail": "Invalid data provided."}, status_code=HTTPStatus.NOT_FOUND
+            content={"detail": "Invalid data provided."},
+            status_code=HTTPStatus.BAD_REQUEST
         )
 
 
 @router.post("/orders/assign", dependencies=[Depends(rate_limiter)])
 @inject
 async def assign_orders(
-    date=None,
-    order_service: OrderService = Depends(Provide[Container.order_service]),
+        date=None,
+        order_service: OrderService = Depends(
+            Provide[Container.order_service]),
 ):
     if date is None:
         date = datetime.datetime.now()
@@ -114,14 +126,17 @@ async def assign_orders(
             correct_date = datetime.datetime.strptime(date, "%Y-%m-%d")
         except ValidationError:
             return JSONResponse(
-                content={"detail": "Invalid data provided."}, status_code=HTTPStatus.NOT_FOUND
+                content={"detail": "Invalid data provided."},
+                status_code=HTTPStatus.BAD_REQUEST
             )
 
     result = await order_service.assign_orders(date=correct_date)
     return (
         JSONResponse(
-            content={"detail": "Invalid data provided."}, status_code=HTTPStatus.NOT_FOUND
+            content={"detail": "Invalid data provided."},
+            status_code=HTTPStatus.BAD_REQUEST
         )
         if result is None
-        else JSONResponse(content=result.dict(), status_code=201)
+        else JSONResponse(content=result.dict(),
+                          status_code=HTTPStatus.CREATED)
     )

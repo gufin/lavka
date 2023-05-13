@@ -1,3 +1,4 @@
+from http import HTTPStatus
 from datetime import datetime
 
 import pytest
@@ -30,7 +31,7 @@ async def test_post_courier_valid(make_post_request, setup_database):
             ]
         },
     )
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK
     assert response.body == {
         "couriers": [
             {
@@ -68,7 +69,7 @@ async def test_post_courier_invalid(make_post_request):
             ]
         },
     )
-    assert response.status == 400
+    assert response.status == HTTPStatus.BAD_REQUEST
 
 
 async def test_get_existing_courier(
@@ -77,7 +78,7 @@ async def test_get_existing_courier(
     await setup_database
     await create_couriers
     response = await make_get_request("/couriers/1")
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK
     assert response.body == {
         "courier_id": 1,
         "courier_type": "FOOT",
@@ -92,7 +93,7 @@ async def test_get_non_existing_courier(
     await setup_database
     await create_couriers
     response = await make_get_request("/couriers/999")
-    assert response.status == 404
+    assert response.status == HTTPStatus.NOT_FOUND
 
 
 async def test_get_invalid_courier(
@@ -101,14 +102,14 @@ async def test_get_invalid_courier(
     await setup_database
     await create_couriers
     response = await make_get_request("/couriers/e")
-    assert response.status == 400
+    assert response.status == HTTPStatus.BAD_REQUEST
 
 
 async def test_get_couriers(make_get_request, setup_database, create_couriers):
     await setup_database
     await create_couriers
     response = await make_get_request("/couriers")
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK
     assert response.body == {
         "couriers": [
             {
@@ -129,7 +130,7 @@ async def test_get_couriers_limit(
     await setup_database
     await create_couriers
     response = await make_get_request("/couriers?limit=2")
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK
     assert response.body == {
         "couriers": [
             {
@@ -156,7 +157,7 @@ async def test_get_couriers_offset(
     await setup_database
     await create_couriers
     response = await make_get_request("/couriers?offset=1")
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK
     assert response.body == {
         "couriers": [
             {
@@ -177,7 +178,7 @@ async def test_get_couriers_limit_offset(
     await setup_database
     await create_couriers
     response = await make_get_request("/couriers?limit=1&offset=1")
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK
     assert response.body == {
         "couriers": [
             {
@@ -199,7 +200,7 @@ async def test_get_couriers_invalid_limit(
     await setup_database
     await create_couriers
     response = await make_get_request(f"/couriers?limit={limit}")
-    assert response.status == 400
+    assert response.status == HTTPStatus.BAD_REQUEST
 
 
 @pytest.mark.parametrize("offset", ["e", "-1"])
@@ -209,7 +210,7 @@ async def test_get_couriers_invalid_offset(
     await setup_database
     await create_couriers
     response = await make_get_request(f"/couriers?offset={offset}")
-    assert response.status == 400
+    assert response.status == HTTPStatus.BAD_REQUEST
 
 
 @pytest.mark.parametrize(
@@ -229,7 +230,7 @@ async def test_get_couriers_invalid_limit_offset(
     response = await make_get_request(
         f"/couriers?limit={limit}&offset={offset}"
     )
-    assert response.status == 400
+    assert response.status == HTTPStatus.BAD_REQUEST
 
 
 async def test_get_couriers_limit_offset_out_of_range(
@@ -238,7 +239,7 @@ async def test_get_couriers_limit_offset_out_of_range(
     await setup_database
     await create_couriers
     response = await make_get_request("/couriers?limit=1&offset=100")
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK
     assert response.body == {"couriers": [], "limit": 1, "offset": 100}
 
 
@@ -256,7 +257,7 @@ async def test_get_courier_meta_info(
     response = await make_get_request(
         "/couriers/meta-info/1?start_date=2023-04-01&end_date=2023-05-02"
     )
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK
     assert response.body == {
         "courier_id": 1,
         "courier_type": "FOOT",
@@ -281,7 +282,7 @@ async def test_get_courier_meta_info_different_period(
     response = await make_get_request(
         "/couriers/meta-info/1?start_date=2023-04-01&end_date=2023-05-01"
     )
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK
     assert response.body == {
         "courier_id": 1,
         "courier_type": "FOOT",
@@ -342,7 +343,7 @@ async def test_get_courier_meta_info_invalid_params(
     response = await make_get_request(
         f"{path}?start_date={start_date}&end_date={end_date}"
     )
-    assert response.status == 400
+    assert response.status == HTTPStatus.BAD_REQUEST
 
 
 async def test_get_couriers_assignments(
@@ -357,7 +358,7 @@ async def test_get_couriers_assignments(
     await create_orders
     await assign_orders
     response = await make_get_request("/couriers/assignments")
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK
     assert response.body == {
         "date": datetime.now().strftime("%Y-%m-%d"),
         "couriers": [
@@ -414,7 +415,7 @@ async def test_get_couriers_assignments_with_params(
     response = await make_get_request(
         f"/couriers/assignments?date={test_date}&courier_id=1"
     )
-    assert response.status == 200
+    assert response.status == HTTPStatus.OK
     assert response.body == {
         "date": test_date,
         "couriers": [
@@ -471,14 +472,14 @@ async def test_get_couriers_assignments_non_existing_courier(
     response = await make_get_request(
         f"/couriers/assignments?date={test_date}&courier_id=9999"
     )
-    assert response.status == 404
+    assert response.status == HTTPStatus.NOT_FOUND
 
 
 @pytest.mark.parametrize(
     "courier_id, date, expected_status",
     [
-        ("e", datetime.now().strftime("%Y-%m-%d"), 400),
-        (1, "e", 400),
+        ("e", datetime.now().strftime("%Y-%m-%d"), HTTPStatus.BAD_REQUEST),
+        (1, "e", HTTPStatus.BAD_REQUEST),
     ],
 )
 async def test_get_couriers_assignments_invalid_data(
