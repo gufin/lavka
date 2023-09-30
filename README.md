@@ -1,5 +1,5 @@
 # 🛠 Educational project
-The service allows you to register couriers, orders. Calculate the rating and salary of couriers based on completed orders, as well as optimally distribute orders to maximize the number of completed orders per shift of the courier, as well as to minimize the cost.
+This project is my introductory assignment to the Yandex backend development school. The service allows you to register couriers, orders. Calculate the rating and salary of couriers based on completed orders, as well as optimally distribute orders to maximize the number of completed orders per shift of the courier, as well as to minimize the cost.
 
 The following tools were used in the backend part of the project:
 
